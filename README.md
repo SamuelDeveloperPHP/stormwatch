@@ -37,51 +37,60 @@ Aplicação de **monitoramento de raios e previsão do tempo** (estilo WeatherBu
 
 ```
 stormwatch/
-├── docker-compose.yml        # sobe backend + frontend juntos
+├── ingestor/                 # serviço Python: ingere GOES-19 GLM (raios)
+│   ├── glm_service.py        # poller do S3 da NOAA + buffer + API JSON
+│   └── requirements.txt
 ├── backend/
 │   ├── .env.example          # TODAS as variáveis comentadas
-│   ├── Dockerfile
 │   └── src/
 │       ├── server.js         # Express + segurança (Helmet, CORS, rate limit)
 │       ├── config/index.js   # lê e valida env vars
-│       ├── routes/api.js     # /forecast, /lightning, /webhooks/lightning
+│       ├── routes/api.js     # /forecast, /lightning, /safety, /webhooks
 │       ├── middleware/
 │       │   ├── auth.js        # API key (timing-safe) + verificação HMAC
 │       │   └── logger.js      # pino
 │       └── services/
-│           ├── lightning.js   # ADAPTER de raios (mock + stubs reais)
-│           ├── forecast.js    # previsão (mock + stub Open-Meteo)
-│           ├── monitor.js     # decide status e dispara alerta
-│           ├── alerts.js      # webhook genérico assinado + cooldown
-│           └── geo.js         # distância Haversine
+│           ├── lightning.js     # ADAPTER de raios (mock, weatherbug, goesglm)
+│           ├── forecast.js      # previsão (Open-Meteo)
+│           ├── monitor.js       # snapshot para a tela
+│           ├── safetyMonitor.js # loop de segurança server-side + alertas
+│           ├── alerts.js        # webhook genérico assinado
+│           └── geo.js           # distância Haversine
 └── frontend/
     ├── .env.example
-    ├── Dockerfile + nginx.conf
     └── src/
         ├── App.tsx            # polling a cada 15s
         ├── api.ts             # cliente tipado
         ├── types.ts
         └── components/
-            ├── StormMap.tsx   # mapa Leaflet + anéis + strikes
-            └── Panels.tsx     # status, previsão, lista de raios
+            ├── StormMap.tsx   # mapa Leaflet + anéis + incidência
+            └── Panels.tsx     # status de segurança, previsão, lista
 ```
 
 ---
 
 ## Como rodar (desenvolvimento)
 
-Pré-requisito: **Node.js 20+**.
+Pré-requisitos: **Node.js 20+** e **Python 3.11+**.
 
-### 1. Backend
+### 1. Ingestor de raios (Python)
+
+```bash
+cd ingestor
+pip install -r requirements.txt
+python glm_service.py         # sobe em http://127.0.0.1:5055
+```
+
+### 2. Backend (em outro terminal)
 
 ```bash
 cd backend
-cp .env.example .env          # edite se quiser
+cp .env.example .env          # defina APP_API_KEY
 npm install
 npm run dev                   # sobe em http://localhost:4000
 ```
 
-### 2. Frontend (em outro terminal)
+### 3. Frontend (em outro terminal)
 
 ```bash
 cd frontend
@@ -91,13 +100,6 @@ npm run dev                   # sobe em http://localhost:5173
 ```
 
 O Vite faz proxy de `/api` para o backend, então não há problema de CORS em dev.
-
-### Com Docker (tudo junto)
-
-```bash
-cp backend/.env.example backend/.env   # configure antes
-docker compose up --build              # frontend em http://localhost:8080
-```
 
 ---
 

@@ -33,25 +33,25 @@ raio no entorno da obra, com:
 Três componentes desacoplados:
 
 ```
-┌────────────────────┐   GLM-L2-LCFA (netCDF4)   ┌──────────────────────┐
-│  NOAA GOES-19 (S3)  │ ────────────────────────▶ │  Ingestor (Python)    │
-│  satélite GLM       │   arquivo a cada 20 s     │  Flask + netCDF4      │
-└────────────────────┘                            │  • parse + filtro AS  │
+┌────────────────────┐   GLM-L2-LCFA (netCDF4)     ┌─────────────────────┐
+│  NOAA GOES-19 (S3) │ ────────────────────────▶  │  Ingestor (Python)    |
+│  satélite GLM      │   arquivo a cada 20 s       │  Flask + netCDF4      │
+└────────────────────┘                             │  • parse + filtro AS  │
                                                    │  • buffer 15 min      │
                                                    │  • expõe JSON         │
                                                    └──────────┬───────────┘
                                                               │ /flashes
                                                               ▼
 ┌────────────────────┐      JSON (x-api-key)      ┌──────────────────────┐
-│  Frontend (React)   │ ◀────────────────────────▶│  Backend (Node)       │
-│  Vite + Leaflet     │                           │  Express              │
-│  • mapa + status    │                           │  • API + segurança    │
-│  • geolocalização   │                           │  • MONITOR DE         │
-│  • previsão         │                           │    SEGURANÇA (loop)   │
-└────────────────────┘                            │  • webhook assinado   │
-                                                   └──────────┬───────────┘
-                                                              │ POST (HMAC)
-                                                              ▼
+│  Frontend (React)  │ ◀────────────────────────▶│  Backend (Node)      │
+│  Vite + Leaflet    │                            │  Express             │
+│  • mapa + status   │                            │  • API + segurança   │
+│  • geolocalização  │                            │  • MONITOR DE        │
+│  • previsão        │                            │    SEGURANÇA (loop)  │
+└────────────────────┘                            │  • webhook assinado  │
+                                                  └──────────┬───────────┘
+                                                             │ POST (HMAC)
+                                                             ▼
                                                   Canal de alerta (a definir):
                                                   WhatsApp / Telegram / SMS / n8n
 ```
