@@ -171,6 +171,26 @@ def flashes():
     )
 
 
+_poller_started = False
+_poller_lock = threading.Lock()
+
+
+def ensure_poller():
+    """Inicia o poller uma única vez (idempotente)."""
+    global _poller_started
+    with _poller_lock:
+        if _poller_started:
+            return
+        _poller_started = True
+        threading.Thread(target=_poller, daemon=True).start()
+
+
+# Inicia ao importar o módulo — cobre tanto a execução direta (`python
+# glm_service.py`) quanto um servidor WSGI que importe `glm_service:app`.
+# Nesse caso, use sempre 1 worker: o buffer de flashes é em memória.
+ensure_poller()
+
+
 if __name__ == "__main__":
-    threading.Thread(target=_poller, daemon=True).start()
-    app.run(host="127.0.0.1", port=PORT, threaded=True)
+    # Servidor de desenvolvimento. Em produção, sirva via WSGI (ex.: waitress).
+    app.run(host=os.getenv("GLM_HOST", "127.0.0.1"), port=PORT, threaded=True)
