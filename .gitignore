@@ -1,0 +1,32 @@
+# Dependências
+node_modules/
+
+# Builds
+dist/
+build/
+
+# Segredos / variáveis de ambiente — NUNCA versionar (.env.example é versionado)
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Dados brutos do GLM (netCDF)
+*.nc
+
+# Logs
+*.log
+
+# Ferramentas / editor / agente
+.claude/
+.vscode/
+.idea/
+
+# Sistema operacional
+.DS_Store
+Thumbs.db
