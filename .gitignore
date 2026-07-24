@@ -19,6 +19,9 @@ venv/
 # Dados brutos do GLM (netCDF)
 *.nc
 
+# Armazém de raios persistido em runtime (retenção de 24h)
+backend/data/
+
 # Logs
 *.log
 

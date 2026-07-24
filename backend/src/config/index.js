@@ -57,8 +57,9 @@ export const config = Object.freeze({
     lon: num("MONITOR_LON", -49.2939),
     label: process.env.MONITOR_LABEL ?? "Local monitorado",
   },
-  // Raio de SEGURANÇA: distância a partir da qual se considera risco (fiscal pediu 10 km).
-  alertRadiusKm: num("ALERT_RADIUS_KM", 10),
+  // Raio de SEGURANÇA (distância crítica): padrão dos EUA para raios = 8 km.
+  // A ~8 km o raio já é ameaça direta -> "parar atividades" (regra prática NWS).
+  alertRadiusKm: num("ALERT_RADIUS_KM", 8),
   // Margem para a incerteza de posição do GLM (~10 km). Gatilho efetivo = raio + margem.
   // Lado seguro do erro: alerta cedo em vez de perder um raio que esteja realmente perto.
   alertMarginKm: num("ALERT_MARGIN_KM", 10),
@@ -71,6 +72,13 @@ export const config = Object.freeze({
   // Loop de monitoramento server-side (alerta mesmo com o app fechado).
   safetyEnabled: (process.env.SAFETY_MONITOR ?? "true") !== "false",
   safetyTickSec: num("SAFETY_TICK_SEC", 30),
+
+  // --- Persistência de raios (marcação no mapa + retenção de dados) ---
+  // Cada raio fica MARCADO no mapa por este tempo (padrão dos EUA: 30 min).
+  mapMarkerTtlMin: num("MAP_MARKER_TTL_MIN", 30),
+  // RETENÇÃO: os raios ficam armazenados por estas horas e então são apagados
+  // da aplicação (padrão pedido: 24 h).
+  strikeRetentionHours: num("STRIKE_RETENTION_HOURS", 24),
 
   // Saída de alerta
   alertWebhookUrl: process.env.ALERT_WEBHOOK_URL ?? "",

@@ -8,6 +8,8 @@ import { config, isProd } from "./config/index.js";
 import { logger } from "./middleware/logger.js";
 import { router } from "./routes/api.js";
 import { startSafetyMonitor } from "./services/safetyMonitor.js";
+import { startStrikeCollector } from "./services/strikeCollector.js";
+import { flush as flushStrikeStore } from "./services/strikeStore.js";
 
 const app = express();
 
@@ -76,11 +78,13 @@ const server = app.listen(config.port, () => {
     `StormWatch backend ouvindo em :${config.port} [${config.env}] provider=${config.lightningProvider}`
   );
   startSafetyMonitor();
+  startStrikeCollector();
 });
 
 // --- Encerramento gracioso ---
 function shutdown(signal) {
   logger.info(`Recebido ${signal}, encerrando...`);
+  flushStrikeStore(); // grava o armazém de raios antes de sair
   server.close(() => {
     logger.info("Servidor encerrado.");
     process.exit(0);

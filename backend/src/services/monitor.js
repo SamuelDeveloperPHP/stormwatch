@@ -1,6 +1,8 @@
 import { config } from "../config/index.js";
 import { getRecentStrikes } from "./lightning.js";
 import { isOnCooldown } from "./alerts.js";
+import { ingest, recent as recentStrikes } from "./strikeStore.js";
+import { haversineKm } from "./geo.js";
 
 /**
  * Núcleo da lógica de monitoramento:
@@ -10,14 +12,33 @@ import { isOnCooldown } from "./alerts.js";
  *
  * Retorna um snapshot consumível pelo front-end.
  */
-const REGION_CAP = 5000; // teto de pontos enviados ao mapa (proteção de payload)
+const REGION_CAP = 5000; // teto de pontos de incidência regional (proteção de payload)
+const MARKER_CAP = 1500; // teto de marcadores de raio (30 min) enviados ao mapa
 
 export async function evaluateMonitor({ lat, lon }) {
   // `all` traz TODAS as descargas da fonte (p/ GLM = toda a América do Sul),
   // já com distanceKm e ordenadas da mais próxima para a mais distante.
   const all = await getRecentStrikes({ lat, lon });
-  const closest = all[0] ?? null;
   const radius = config.alertRadiusKm;
+
+  // Alimenta o armazém persistente com os raios próximos deste ciclo (dedup por
+  // id). O coletor em background faz o mesmo; aqui garante resposta imediata ao
+  // abrir o app. Retenção de 24 h e limpeza ficam a cargo do armazém/coletor.
+  ingest(all.filter((s) => s.distanceKm <= config.maxDisplayKm));
+
+  // Descargas MARCADAS no mapa (e na lista lateral): as dos últimos
+  // `mapMarkerTtlMin` minutos (padrão dos EUA: 30 min), vindas do armazém.
+  // A distância é recalculada em relação ao ponto consultado.
+  const strikes = recentStrikes(config.mapMarkerTtlMin)
+    .map((s) => ({
+      ...s,
+      distanceKm: Number(haversineKm(lat, lon, s.lat, s.lon).toFixed(2)),
+    }))
+    .filter((s) => s.distanceKm <= config.maxDisplayKm)
+    .sort((a, b) => a.distanceKm - b.distanceKm)
+    .slice(0, MARKER_CAP);
+
+  const closest = strikes[0] ?? null;
 
   let status = "safe"; // safe | watch | alert
   if (closest) {
@@ -25,12 +46,9 @@ export async function evaluateMonitor({ lat, lon }) {
     else if (closest.distanceKm <= radius * 2) status = "watch";
   }
 
-  const inRadiusCount = all.filter((s) => s.distanceKm <= radius).length;
+  const inRadiusCount = strikes.filter((s) => s.distanceKm <= radius).length;
 
-  // Descargas PRÓXIMAS (lista lateral + popups): limitadas ao raio de exibição.
-  const strikes = all.filter((s) => s.distanceKm <= config.maxDisplayKm);
-
-  // Incidência REGIONAL (mapa): todos os flashes, compactados em [lat, lon].
+  // Incidência REGIONAL (mapa): todos os flashes AO VIVO, compactados em [lat, lon].
   const region = all.slice(0, REGION_CAP).map((s) => [s.lat, s.lon]);
   const regionTruncated = all.length > REGION_CAP;
 
