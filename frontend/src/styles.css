@@ -263,6 +263,16 @@ h3 {
   border: 1px solid var(--accent-bright);
 }
 
+/* Marcador de raio (ícone de relâmpago): remove a "caixa" branca padrão do
+   divIcon do Leaflet e dá um leve realce. */
+.leaflet-div-icon.bolt-marker {
+  background: transparent;
+  border: none;
+}
+.bolt-marker svg {
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.35));
+}
+
 .muted {
   color: var(--ink-mute);
   font-size: 12px;

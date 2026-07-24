@@ -119,7 +119,7 @@ export function StrikeList({ snapshot }: { snapshot: MonitorSnapshot | null }) {
     <div className="card">
       <h3>Raios recentes</h3>
       {!snapshot || snapshot.strikes.length === 0 ? (
-        <p className="muted">Nenhum raio detectado nos últimos minutos.</p>
+        <p className="muted">Nenhum raio detectado nos últimos 30 minutos.</p>
       ) : (
         <div className="strike-list">
           {snapshot.strikes.map((s) => {
