@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Circle, CircleMarker, Marker, Popup, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Circle, Marker, Popup, useMap } from "react-leaflet";
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import type { MonitorSnapshot } from "../types.ts";
@@ -11,6 +11,29 @@ const markerIcon = new L.Icon({
   iconSize: [25, 41],
   iconAnchor: [12, 41],
 });
+
+// Ícone de RELÂMPAGO para cada raio (marcação no mapa).
+// Vermelho = dentro do raio crítico; âmbar = fora. Ambos ficam 30 min no mapa.
+const BOLT_PATH = "M7 2v11h3v9l7-12h-4l4-8z";
+function boltIcon(color: string) {
+  return L.divIcon({
+    className: "bolt-marker",
+    html: `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="${BOLT_PATH}" fill="${color}" stroke="#111827" stroke-width="1.2" stroke-linejoin="round"/></svg>`,
+    iconSize: [20, 20],
+    iconAnchor: [10, 19],
+  });
+}
+const boltNear = boltIcon("#ef4444");
+const boltFar = boltIcon("#f59e0b");
+
+/** Glifo de relâmpago usado na legenda. */
+function BoltGlyph({ color }: { color: string }) {
+  return (
+    <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" style={{ flex: "none" }}>
+      <path d={BOLT_PATH} fill={color} stroke="#111827" strokeWidth={1.2} strokeLinejoin="round" />
+    </svg>
+  );
+}
 
 /**
  * Camada de incidência (toda a América do Sul) em UM ÚNICO canvas.
@@ -156,7 +179,7 @@ export default function StormMap({ snapshot }: Props) {
     ? [snapshot.location.lat, snapshot.location.lon]
     : [-25.5306, -49.2939];
 
-  const radiusKm = snapshot?.radiusKm ?? 30;
+  const radiusKm = snapshot?.radiusKm ?? 8;
   // Anéis de referência a cada 15 km, até 120 km (estilo "alvo" do WeatherBug).
   const RING_STEP_KM = 15;
   const RING_MAX_KM = 120;
@@ -210,31 +233,24 @@ export default function StormMap({ snapshot }: Props) {
           }}
         />
 
-        {/* Strikes */}
+        {/* Raios: cada descarga marcada com ícone de relâmpago. Permanece no
+            mapa por 30 min (janela servida pelo backend). Vermelho = dentro do
+            raio crítico; âmbar = fora. */}
         {snapshot?.strikes.map((s) => {
           const near = s.distanceKm <= radiusKm;
+          const when = new Date(s.timestamp).toLocaleTimeString("pt-BR", {
+            hour: "2-digit",
+            minute: "2-digit",
+          });
           return (
-            <CircleMarker
-              key={s.id}
-              center={[s.lat, s.lon]}
-              radius={near ? 7 : 5}
-              pathOptions={{
-                color: near ? "#ef4444" : "#f59e0b",
-                fillColor: near ? "#ef4444" : "#f59e0b",
-                fillOpacity: 0.8,
-                weight: 1,
-              }}
-            >
+            <Marker key={s.id} position={[s.lat, s.lon]} icon={near ? boltNear : boltFar}>
               <Popup>
-                {s.distanceKm} km
-                {s.peakAmpKa ? (
-                  <>
-                    <br />
-                    {Math.abs(s.peakAmpKa)} kA
-                  </>
-                ) : null}
+                <strong>{s.distanceKm} km</strong> · {when}
+                <br />
+                {s.type === "CG" ? "nuvem-solo" : "intra-nuvem"}
+                {s.peakAmpKa ? <> · {Math.abs(s.peakAmpKa)} kA</> : null}
               </Popup>
-            </CircleMarker>
+            </Marker>
           );
         })}
       </MapContainer>
@@ -251,25 +267,22 @@ export default function StormMap({ snapshot }: Props) {
           Raio crítico de alerta ({radiusKm} km)
         </div>
         <div className="legend-row">
-          <span
-            className="legend-ring"
-            style={{ background: "#ef4444", borderColor: "#ef4444" }}
-          />
+          <BoltGlyph color="#ef4444" />
           Raio dentro do limite crítico
         </div>
         <div className="legend-row">
-          <span
-            className="legend-ring"
-            style={{ background: "#f59e0b", borderColor: "#f59e0b" }}
-          />
-          Raio distante
+          <BoltGlyph color="#f59e0b" />
+          Raio fora do limite crítico
         </div>
         <div className="legend-row">
           <span
             className="legend-ring"
             style={{ background: "#f5009e", borderColor: "#111827" }}
           />
-          Incidência GLM (América do Sul)
+          Raios em toda a América do Sul (ao vivo)
+        </div>
+        <div className="legend-row" style={{ color: "var(--ink-mute)", fontSize: 11 }}>
+          ⚡ = perto do local (últimos 30 min). Pontos = tudo ao vivo.
         </div>
       </div>
     </div>
