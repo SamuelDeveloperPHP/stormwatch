@@ -20,17 +20,14 @@ function mockProvider({ lat, lon }) {
   mockClock += 1;
   const now = Date.now();
 
-  // A "tempestade" oscila a distância base entre ~60km e ~8km num ciclo.
-  const phase = (mockClock % 40) / 40; // 0..1
-  const baseDistanceKm = 8 + Math.abs(Math.sin(phase * Math.PI)) * 0 + (1 - Math.sin(phase * Math.PI)) * 55;
-
   const count = 3 + Math.floor(Math.random() * 6);
   const strikes = [];
+  const spanKm = config.maxDisplayKm - 3; // 3 km até o raio de exibição (~120 km)
 
   for (let i = 0; i < count; i++) {
-    // Espalha os strikes em torno de uma distância-base, com ruído.
-    const jitterKm = (Math.random() - 0.5) * 24;
-    const distanceKm = Math.max(0.5, baseDistanceKm + jitterKm);
+    // Espalha as descargas por TODO o raio (3 km → 120 km) em rumos aleatórios,
+    // formando um "campo" de raios — bom para a visualização e o radar.
+    const distanceKm = 3 + Math.random() * spanKm;
     const bearing = Math.random() * 2 * Math.PI;
 
     // Converte distância+rumo em deslocamento aproximado de lat/lon.
@@ -39,7 +36,7 @@ function mockProvider({ lat, lon }) {
       (distanceKm / (111 * Math.cos((lat * Math.PI) / 180))) * Math.sin(bearing);
 
     strikes.push({
-      id: `mock-${now}-${i}`,
+      id: `mock-${now}-${mockClock}-${i}`,
       lat: lat + dLat,
       lon: lon + dLon,
       timestamp: now - Math.floor(Math.random() * 5 * 60 * 1000),

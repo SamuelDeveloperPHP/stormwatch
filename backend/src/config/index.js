@@ -76,6 +76,9 @@ export const config = Object.freeze({
   // --- Persistência de raios (marcação no mapa + retenção de dados) ---
   // Cada raio fica MARCADO no mapa por este tempo (padrão dos EUA: 30 min).
   mapMarkerTtlMin: num("MAP_MARKER_TTL_MIN", 30),
+  // Máximo de raios EXIBIDOS no mapa (os mais próximos), para manter o mapa
+  // limpo. Não afeta a avaliação de segurança (que usa o feed completo).
+  mapMaxMarkers: num("MAP_MAX_MARKERS", 10),
   // RETENÇÃO: os raios ficam armazenados por estas horas e então são apagados
   // da aplicação (padrão pedido: 24 h).
   strikeRetentionHours: num("STRIKE_RETENTION_HOURS", 24),
