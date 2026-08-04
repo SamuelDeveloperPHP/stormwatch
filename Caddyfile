@@ -1,0 +1,23 @@
+# StormWatch — Caddy (HTTPS automático + proxy da API)
+#
+# Troque SEU_HOST por:
+#   - seu domínio (ex.: stormwatch.seudominio.com), com um registro A
+#     apontando para o IP externo da VM; OU
+#   - o IP da VM com sslip.io (ex.: 203.0.113.5.sslip.io) para ter
+#     HTTPS grátis sem precisar comprar domínio.
+
+SEU_HOST {
+	encode gzip
+
+	# API -> backend Node (mesma origem, então sem CORS)
+	handle /api/* {
+		reverse_proxy 127.0.0.1:4000
+	}
+
+	# Frontend estático (build do Vite em frontend/dist)
+	handle {
+		root * /opt/stormwatch/frontend/dist
+		try_files {path} /index.html
+		file_server
+	}
+}
