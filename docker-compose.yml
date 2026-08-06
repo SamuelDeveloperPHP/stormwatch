@@ -1,0 +1,55 @@
+# StormWatch — produção com Docker.
+# 1) cp .env.example .env  e preencha SITE_HOST + APP_API_KEY
+# 2) docker compose up -d --build
+services:
+  ingestor:
+    build: ./ingestor
+    restart: unless-stopped
+    expose:
+      - "5055"
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      - ingestor
+    environment:
+      NODE_ENV: production
+      PORT: "4000"
+      LIGHTNING_PROVIDER: goesglm
+      FORECAST_PROVIDER: openmeteo
+      GLM_SERVICE_URL: http://ingestor:5055
+      APP_API_KEY: ${APP_API_KEY:?defina APP_API_KEY no .env}
+      CORS_ORIGINS: https://${SITE_HOST}
+      MONITOR_LAT: ${MONITOR_LAT:--25.5306}
+      MONITOR_LON: ${MONITOR_LON:--49.2939}
+      MONITOR_LABEL: ${MONITOR_LABEL:-Local monitorado}
+      ALERT_RADIUS_KM: ${ALERT_RADIUS_KM:-8}
+      ALERT_WEBHOOK_URL: ${ALERT_WEBHOOK_URL:-}
+    volumes:
+      - strike_data:/app/data
+    expose:
+      - "4000"
+
+  caddy:
+    build:
+      context: .
+      dockerfile: docker/caddy.Dockerfile
+      args:
+        VITE_APP_API_KEY: ${APP_API_KEY:?defina APP_API_KEY no .env}
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      SITE_HOST: ${SITE_HOST:?defina SITE_HOST no .env}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  strike_data:
+  caddy_data:
+  caddy_config:

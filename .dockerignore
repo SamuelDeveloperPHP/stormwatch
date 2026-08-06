@@ -1,0 +1,11 @@
+# Contexto de build do serviço caddy (raiz). Mantém o contexto enxuto.
+**/node_modules
+**/.venv
+**/__pycache__
+**/*.pyc
+**/*.nc
+backend/data
+frontend/dist
+.git
+.github
+.claude
