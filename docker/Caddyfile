@@ -1,0 +1,18 @@
+# Caddy para o deploy com Docker.
+# SITE_HOST vem do ambiente (definido no .env / docker-compose).
+# Com um domínio ou nome sslip.io/duckdns.org, o HTTPS é emitido automaticamente.
+{$SITE_HOST} {
+	encode gzip
+
+	# API -> backend Node (mesma origem, sem CORS)
+	handle /api/* {
+		reverse_proxy backend:4000
+	}
+
+	# Frontend estático (build do Vite)
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

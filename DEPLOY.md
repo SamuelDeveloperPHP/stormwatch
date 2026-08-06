@@ -3,6 +3,8 @@
 Sobe os três serviços — **ingestor (Python)**, **backend (Node)** e **frontend (React)** — numa VM Linux, com **pm2** (mantém os processos no ar) e **Caddy** (HTTPS automático + proxy da API).
 
 > Arquitetura no servidor: o Caddy atende a porta 443 e faz `/api/*` → backend (`:4000`); todo o resto serve o frontend estático. O backend fala com o ingestor em `127.0.0.1:5055` (tudo na mesma VM).
+>
+> **Duas formas de subir (a Seção 1 vale para ambas):** com **Docker** (Seção 2 — recomendado, sobe com um comando) ou **manualmente** com pm2 + Caddy (alternativa ao final).
 
 ---
 
@@ -19,7 +21,59 @@ Sobe os três serviços — **ingestor (Python)**, **backend (Node)** e **fronte
 
 ---
 
-## 2. Preparar o servidor (só na primeira vez)
+## 2. Deploy com Docker (recomendado)
+
+Sobe os três serviços com um comando — só precisa de Docker na VM.
+
+```bash
+# Instalar Docker (uma vez)
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER && newgrp docker   # usar docker sem sudo
+
+# Clonar
+sudo mkdir -p /opt/stormwatch && sudo chown $USER:$USER /opt/stormwatch
+git clone https://github.com/SamuelDeveloperPHP/stormwatch.git /opt/stormwatch
+cd /opt/stormwatch
+
+# Configurar
+cp .env.example .env
+nano .env    # defina SITE_HOST (domínio/duckdns) e APP_API_KEY (openssl rand -hex 32)
+
+# Subir (build + start em background)
+docker compose up -d --build
+
+# Estado / logs
+docker compose ps
+docker compose logs -f
+```
+
+Pronto: os 3 serviços sobem, o **Caddy emite o HTTPS automaticamente** para o `SITE_HOST`, e o app fica em **https://SITE_HOST**.
+
+- O `APP_API_KEY` do `.env` é usado no backend **e** embutido no build do frontend — não precisa duplicar.
+- Dados (armazém de 24 h) e certificados TLS ficam em **volumes Docker** e sobrevivem a `docker compose down`.
+
+**Atualizar depois:**
+
+```bash
+cd /opt/stormwatch && git pull && docker compose up -d --build
+```
+
+**Comandos úteis (Docker):**
+
+```bash
+docker compose logs -f ingestor    # poller da NOAA
+docker compose logs -f backend     # API + monitor de segurança
+docker compose restart backend
+docker compose down                # parar tudo (volumes preservados)
+```
+
+---
+
+## Alternativa — Deploy sem Docker (pm2 + Caddy)
+
+Os passos abaixo são o caminho manual, caso você não queira usar Docker.
+
+### Preparar o servidor (só na primeira vez)
 
 ```bash
 sudo apt update && sudo apt -y upgrade
@@ -37,7 +91,7 @@ sudo apt update && sudo apt install -y caddy
 
 ---
 
-## 3. Clonar e configurar
+### Clonar e configurar
 
 ```bash
 sudo mkdir -p /opt/stormwatch && sudo chown $USER:$USER /opt/stormwatch
@@ -93,7 +147,7 @@ cd ..
 
 ---
 
-## 4. Subir os serviços (pm2)
+### Subir os serviços (pm2)
 
 ```bash
 cd /opt/stormwatch
@@ -105,7 +159,7 @@ pm2 status      # ingestor e backend devem aparecer "online"
 
 ---
 
-## 5. HTTPS (Caddy)
+### HTTPS (Caddy)
 
 Escolha o `SEU_HOST`:
 - **Com domínio:** aponte um registro **A** do domínio para o IP da VM e use `stormwatch.seudominio.com`.
@@ -122,7 +176,7 @@ Acesse **https://SEU_HOST** 🎉
 
 ---
 
-## Atualizar depois (novo deploy)
+### Atualizar depois (sem Docker)
 
 ```bash
 cd /opt/stormwatch
@@ -132,7 +186,7 @@ cd backend && npm ci && cd ..
 pm2 restart all
 ```
 
-## Comandos úteis
+### Comandos úteis (sem Docker)
 
 - `pm2 status` / `pm2 logs` — estado e logs dos serviços
 - `pm2 logs stormwatch-ingestor` — logs só do poller da NOAA
