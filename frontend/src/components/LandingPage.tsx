@@ -83,10 +83,8 @@ export default function LandingPage({
             💼 Ver Planos B2B para Empresas
           </button>
         </div>
-      </header>
 
-      {/* Live Metrics Teaser Bar (Logo abaixo da Hero Section) */}
-      <div className="hero-stats-bar-wrapper">
+        {/* Live Metrics Teaser Bar (Integrada elegantemente ao Hero) */}
         <div className="hero-stats-bar">
           <div className="stat-item">
             <span className="stat-value">NOAA GOES-19</span>
@@ -108,7 +106,7 @@ export default function LandingPage({
             <span className="stat-label">Conformidade Operacional</span>
           </div>
         </div>
-      </div>
+      </header>
 
       {/* Seção Principal de Clima (Logo após o Título & CTAs da Hero) */}
       <section id="weather-section" className="landing-section weather-showcase-section">
@@ -122,50 +120,79 @@ export default function LandingPage({
               : "card-mood-clear"
           }`}
         >
-          {/* Barra Horizontal Responsiva: Todas as informações do Tempo Agora na Mesma Linha */}
-          <div className="hero-weather-now-inline">
-            <div className="now-inline-loc-badge">
-              <span className="loc-pin" aria-hidden="true">📍</span>
-              <div className="now-inline-loc-text">
-                <strong>{place || snapshot?.location.label || "Curitiba, PR - Brasil"}</strong>
-                <span className="now-subloc-tag">
-                  {snapshot ? ` (${snapshot.location.lat.toFixed(2)}, ${snapshot.location.lon.toFixed(2)})` : ""}
+          {/* Header Estruturado em 2 Níveis para Zero Poluição Visual */}
+          <div className="hero-weather-now-container">
+            {/* Nível 1: Localização & Status Operacional */}
+            <div className="now-card-top-bar">
+              <div className="now-loc-info">
+                <span className="loc-pin" aria-hidden="true">📍</span>
+                <strong className="loc-name">{place || snapshot?.location.label || "Curitiba, PR - Brasil"}</strong>
+                {snapshot && (
+                  <span className="now-subloc-coords">
+                    ({snapshot.location.lat.toFixed(2)}, {snapshot.location.lon.toFixed(2)})
+                  </span>
+                )}
+              </div>
+
+              <div className="now-status-group">
+                <span className="hero-weather-live-tag">TEMPO AGORA</span>
+                <span
+                  className={`operational-status-pill ${
+                    current?.condition === "thunderstorm" || current?.condition === "rain"
+                      ? "status-risk"
+                      : "status-safe"
+                  }`}
+                >
+                  {current?.condition === "thunderstorm"
+                    ? "🔴 Alerta NR-18: Risco de Raios / Paralisação"
+                    : current?.condition === "rain"
+                    ? "🟡 Atenção: Janela de Chuva no Campo"
+                    : "🟢 Janela Operacional Segura"}
                 </span>
               </div>
-              <span className="hero-weather-live-tag">TEMPO AGORA</span>
-
-              {/* Badge de Alerta Operacional B2B */}
-              <span
-                className={`operational-status-pill ${
-                  current?.condition === "thunderstorm" || current?.condition === "rain"
-                    ? "status-risk"
-                    : "status-safe"
-                }`}
-              >
-                {current?.condition === "thunderstorm"
-                  ? "🔴 Alerta NR-18: Risco de Raios / Paralisação"
-                  : current?.condition === "rain"
-                  ? "🟡 Atenção: Janela de Chuva no Campo"
-                  : "🟢 Janela Operacional Segura"}
-              </span>
             </div>
 
+            {/* Nível 2: Temperatura Principal & Metadados da Cidade */}
             {current ? (
-              <div className="now-inline-weather-data">
-                <div className="now-inline-temp-cond">
+              <div className="now-card-main-bar">
+                <div className="now-temp-block">
                   <span className="now-inline-icon">{conditionEmoji(current.condition)}</span>
-                  <span className="now-inline-temp">{current.tempC}°C</span>
-                  <span className="now-inline-cond">{current.conditionLabel}</span>
+                  <div className="now-temp-text">
+                    <span className="now-big-temp">{current.tempC}°C</span>
+                    <span className="now-cond-desc">{current.conditionLabel}</span>
+                  </div>
                 </div>
 
-                <div className="now-inline-pills-group">
-                  <span className="weather-pill">🌡️ Sensação <strong>{current.feelsLikeC}°C</strong></span>
-                  <span className="weather-pill">💧 Umidade <strong>{current.humidity}%</strong></span>
-                  <span className="weather-pill">💨 Vento <strong>{current.windKmh} km/h</strong></span>
+                <div className="now-metrics-cluster">
+                  <div className="weather-pill-card">
+                    <span className="pill-icon">🌡️</span>
+                    <div className="pill-content">
+                      <span className="pill-label">Sensação</span>
+                      <strong>{current.feelsLikeC}°C</strong>
+                    </div>
+                  </div>
+
+                  <div className="weather-pill-card">
+                    <span className="pill-icon">💧</span>
+                    <div className="pill-content">
+                      <span className="pill-label">Umidade</span>
+                      <strong>{current.humidity}%</strong>
+                    </div>
+                  </div>
+
+                  <div className="weather-pill-card">
+                    <span className="pill-icon">💨</span>
+                    <div className="pill-content">
+                      <span className="pill-label">Vento</span>
+                      <strong>{current.windKmh} km/h</strong>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="muted" style={{ fontSize: 13 }}>Carregando dados meteorológicos em tempo real…</div>
+              <div className="muted" style={{ fontSize: 13, padding: "10px 0" }}>
+                Carregando dados meteorológicos em tempo real…
+              </div>
             )}
           </div>
 
