@@ -78,9 +78,12 @@ async function openMeteoForecast({ lat, lon, label }) {
     longitude: String(lon),
     current:
       "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m",
-    hourly: "temperature_2m,precipitation_probability,weather_code",
+    hourly:
+      "temperature_2m,precipitation_probability,precipitation,wind_speed_10m,wind_direction_10m,relative_humidity_2m,weather_code",
+    daily:
+      "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max",
     timezone: "auto", // horários no fuso local do ponto monitorado
-    forecast_days: "2", // suficiente para as próximas horas, mesmo perto da meia-noite
+    forecast_days: "5", // 5 dias completos
   });
   const url = `https://api.open-meteo.com/v1/forecast?${params}`;
 
@@ -107,10 +110,14 @@ async function openMeteoForecast({ lat, lon, label }) {
   }
   const curDesc = describe(cur.weather_code);
 
-  // Monta as próximas horas a partir da hora atual.
+  // Monta as próximas 12 a 24 horas a partir da hora atual.
   const times = data.hourly?.time ?? [];
   const temps = data.hourly?.temperature_2m ?? [];
-  const precs = data.hourly?.precipitation_probability ?? [];
+  const precProbs = data.hourly?.precipitation_probability ?? [];
+  const precMms = data.hourly?.precipitation ?? [];
+  const windSpeeds = data.hourly?.wind_speed_10m ?? [];
+  const windDirs = data.hourly?.wind_direction_10m ?? [];
+  const humidities = data.hourly?.relative_humidity_2m ?? [];
   const codes = data.hourly?.weather_code ?? [];
 
   // Primeira hora >= agora (comparação lexicográfica do prefixo "YYYY-MM-DDTHH").
@@ -119,16 +126,54 @@ async function openMeteoForecast({ lat, lon, label }) {
   if (start < 0) start = 0;
 
   const hourly = [];
-  for (let i = start; i < times.length && hourly.length < HOURS_AHEAD; i++) {
+  for (let i = start; i < times.length && hourly.length < 12; i++) {
     if (!Number.isFinite(temps[i])) continue;
     const d = describe(codes[i]);
     hourly.push({
       time: times[i],
       hourLabel: hourLabelFromIso(times[i]),
       tempC: Math.round(temps[i]),
-      precipProb: Math.round(precs[i] ?? 0),
+      precipProb: Math.round(precProbs[i] ?? 0),
+      precipMm: parseFloat((precMms[i] ?? 0).toFixed(1)),
+      windKmh: Math.round(windSpeeds[i] ?? 0),
+      windDirDeg: Math.round(windDirs[i] ?? 0),
+      humidity: Math.round(humidities[i] ?? 0),
       condition: d.condition,
+      conditionLabel: d.label,
       icon: d.icon,
+    });
+  }
+
+  // Monta a previsão dos 5 Dias (daily)
+  const dTimes = data.daily?.time ?? [];
+  const dMaxTemps = data.daily?.temperature_2m_max ?? [];
+  const dMinTemps = data.daily?.temperature_2m_min ?? [];
+  const dPrecProbs = data.daily?.precipitation_probability_max ?? [];
+  const dPrecSums = data.daily?.precipitation_sum ?? [];
+  const dWindMaxs = data.daily?.wind_speed_10m_max ?? [];
+  const dCodes = data.daily?.weather_code ?? [];
+
+  const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  const daily = [];
+  for (let i = 0; i < dTimes.length && i < 5; i++) {
+    const dDate = new Date(dTimes[i] + "T00:00:00");
+    const todayStr = new Date().toISOString().slice(0, 10);
+    let dayLabel = WEEKDAYS[dDate.getDay()];
+    if (dTimes[i] === todayStr) dayLabel = "Hoje";
+
+    const dDesc = describe(dCodes[i]);
+
+    daily.push({
+      date: dTimes[i],
+      dayLabel,
+      tempMaxC: Math.round(dMaxTemps[i] ?? 0),
+      tempMinC: Math.round(dMinTemps[i] ?? 0),
+      precipProbMax: Math.round(dPrecProbs[i] ?? 0),
+      precipSumMm: parseFloat((dPrecSums[i] ?? 0).toFixed(1)),
+      windKmhMax: Math.round(dWindMaxs[i] ?? 0),
+      condition: dDesc.condition,
+      conditionLabel: dDesc.label,
+      icon: dDesc.icon,
     });
   }
 
@@ -145,6 +190,7 @@ async function openMeteoForecast({ lat, lon, label }) {
       icon: curDesc.icon,
     },
     hourly,
+    daily,
   };
 }
 
@@ -161,15 +207,38 @@ async function mockForecast({ lat, lon, label }) {
   const now = new Date();
   const pick = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
 
-  const hourly = Array.from({ length: HOURS_AHEAD }, (_, i) => {
+  const hourly = Array.from({ length: 12 }, (_, i) => {
     const t = new Date(now.getTime() + i * 3600 * 1000);
     const c = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
     return {
       time: t.toISOString(),
       hourLabel: `${String(t.getHours()).padStart(2, "0")}h`,
-      tempC: Math.round(18 + Math.random() * 12),
+      tempC: Math.round(15 + Math.random() * 10),
       precipProb: Math.round(Math.random() * 100),
+      precipMm: parseFloat((Math.random() * 2).toFixed(1)),
+      windKmh: Math.round(5 + Math.random() * 20),
+      windDirDeg: Math.round(Math.random() * 360),
+      humidity: Math.round(60 + Math.random() * 35),
       condition: c.code,
+      conditionLabel: c.label,
+      icon: c.icon,
+    };
+  });
+
+  const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  const daily = Array.from({ length: 5 }, (_, i) => {
+    const d = new Date(now.getTime() + i * 86400 * 1000);
+    const c = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
+    return {
+      date: d.toISOString().slice(0, 10),
+      dayLabel: i === 0 ? "Hoje" : WEEKDAYS[d.getDay()],
+      tempMaxC: Math.round(20 + Math.random() * 6),
+      tempMinC: Math.round(12 + Math.random() * 5),
+      precipProbMax: Math.round(Math.random() * 100),
+      precipSumMm: parseFloat((Math.random() * 5).toFixed(1)),
+      windKmhMax: Math.round(10 + Math.random() * 20),
+      condition: c.code,
+      conditionLabel: c.label,
       icon: c.icon,
     };
   });
@@ -187,8 +256,10 @@ async function mockForecast({ lat, lon, label }) {
       icon: pick.icon,
     },
     hourly,
+    daily,
   };
 }
+
 
 const PROVIDERS = {
   openmeteo: openMeteoForecast,

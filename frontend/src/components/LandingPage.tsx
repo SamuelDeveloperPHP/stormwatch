@@ -199,8 +199,72 @@ export default function LandingPage({
         </div>
       </section>
 
+      {/* Seção de Previsão de 5 Dias */}
+      <section id="5day-forecast" className="landing-section">
+        <div className="section-header">
+          <h2>Previsão para os Próximos 5 Dias em <strong>{place || snapshot?.location.label || "sua região"}</strong></h2>
+          <p>Planejamento de janelas operacionais com precipitação, vento e variação térmica.</p>
+        </div>
+
+        <div className="daily-forecast-grid">
+          {forecast?.daily && forecast.daily.length > 0 ? (
+            forecast.daily.map((day) => (
+              <div className="daily-card" key={day.date}>
+                <div className="daily-card-header">
+                  <strong>{day.dayLabel}</strong>
+                  <span className="daily-card-date">
+                    {new Date(day.date + "T00:00:00").toLocaleDateString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                    })}
+                  </span>
+                </div>
+
+                <div className="daily-card-icon">
+                  {day.condition === "thunderstorm"
+                    ? "⛈️"
+                    : day.condition === "rain"
+                    ? "🌧️"
+                    : day.condition === "partly"
+                    ? "⛅"
+                    : day.condition === "clear"
+                    ? "☀️"
+                    : "☁️"}
+                </div>
+                <div className="daily-card-cond">{day.conditionLabel}</div>
+
+                <div className="daily-temp-range">
+                  <span className="temp-max" title="Temperatura Máxima">
+                    ↑ {day.tempMaxC}°C
+                  </span>
+                  <span className="temp-min" title="Temperatura Mínima">
+                    ↓ {day.tempMinC}°C
+                  </span>
+                </div>
+
+                <div className="daily-metrics">
+                  <div className="daily-metric-row">
+                    <span>🌧️ Chuva:</span>
+                    <strong>{day.precipSumMm} mm ({day.precipProbMax}%)</strong>
+                  </div>
+                  <div className="daily-metric-row">
+                    <span>💨 Vento Máx:</span>
+                    <strong>{day.windKmhMax} km/h</strong>
+                  </div>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="muted" style={{ gridColumn: "1 / -1", textAlign: "center", padding: 20 }}>
+              Buscando dados de previsão estendida para 5 dias…
+            </div>
+          )}
+        </div>
+      </section>
+
       {/* Pricing Section */}
       <section id="pricing-section" className="landing-section pricing-bg">
+
         <div className="section-header">
           <h2>Escolha o Plano Ideal para a Sua Operação</h2>
           <p>Do acesso gratuito para cidadãos a soluções enterprise com emissão de laudos.</p>

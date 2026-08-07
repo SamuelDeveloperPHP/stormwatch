@@ -156,7 +156,9 @@ export function IntensitySummaryPanel({
   );
 }
 
-export function ForecastPanel({ forecast }: { forecast: Forecast | null }) {
+import HourlyForecastWidget from "./HourlyForecastWidget.tsx";
+
+export function ForecastPanel({ forecast, place }: { forecast: Forecast | null; place?: string }) {
   if (!forecast) {
     return (
       <div className="card">
@@ -168,7 +170,7 @@ export function ForecastPanel({ forecast }: { forecast: Forecast | null }) {
   const c = forecast.current;
   return (
     <div className="card">
-      <h3>Tempo agora</h3>
+      <h3>Tempo agora em {place || forecast.location.label}</h3>
       <div className="current">
         <div className="current-temp">{c.tempC}°</div>
         <div className="current-meta">
@@ -178,18 +180,11 @@ export function ForecastPanel({ forecast }: { forecast: Forecast | null }) {
         </div>
       </div>
 
-      <div className="hourly" style={{ marginTop: 14 }}>
-        {forecast.hourly.map((h) => (
-          <div className="hour" key={h.time}>
-            <div className="hour-label">{h.hourLabel}</div>
-            <div className="hour-temp">{h.tempC}°</div>
-            <div className="hour-precip">{h.precipProb}%</div>
-          </div>
-        ))}
-      </div>
+      <HourlyForecastWidget forecast={forecast} place={place} />
     </div>
   );
 }
+
 
 export function StrikeList({
   snapshot,
