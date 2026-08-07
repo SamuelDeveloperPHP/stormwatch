@@ -11,6 +11,7 @@ import {
   Filler,
   type ChartOptions,
 } from "chart.js";
+import ChartDataLabels from "chartjs-plugin-datalabels";
 import { Line } from "react-chartjs-2";
 import type { Forecast } from "../types.ts";
 
@@ -22,7 +23,8 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Filler
+  Filler,
+  ChartDataLabels
 );
 
 interface HourlyForecastWidgetProps {
@@ -50,6 +52,21 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
   const points = forecast.hourly;
   const locationName = place || forecast.location.label || "Sua Localização";
   const labels = points.map((p) => p.hourLabel);
+
+  // Helper para seta de direção do vento
+  const getWindArrow = (deg?: number) => {
+    if (deg == null) return "↑";
+    const directions = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"];
+    return directions[Math.round(deg / 45) % 8];
+  };
+
+  const getConditionIcon = (cond?: string) => {
+    if (cond === "thunderstorm") return "⛈️";
+    if (cond === "rain") return "🌧️";
+    if (cond === "partly") return "⛅";
+    if (cond === "clear") return "☀️";
+    return "☁️";
+  };
 
   // Configurações por aba (Cores e Point Styling oficiais Chart.js)
   const getTabConfig = () => {
@@ -121,10 +138,16 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
     ],
   };
 
-  // Opções do Chart.js
+  // Opções do Chart.js com DataLabels ativados flutuando sobre os pontos
   const chartOptions: ChartOptions<"line"> = {
     responsive: true,
     maintainAspectRatio: false,
+    layout: {
+      padding: {
+        top: 26, // Espaço extra no topo do gráfico para os números não cortarem
+        bottom: 8,
+      },
+    },
     plugins: {
       legend: {
         display: true,
@@ -133,6 +156,23 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
           usePointStyle: true,
           boxWidth: 10,
           font: { family: "Inter, system-ui, sans-serif", size: 12, weight: 600 },
+        },
+      },
+      datalabels: {
+        display: true,
+        align: "top" as const,
+        anchor: "end" as const,
+        offset: 5,
+        color: cfg.borderColor,
+        font: { family: "Inter, system-ui, sans-serif", weight: "bold", size: 12 },
+        formatter: (value, context) => {
+          const idx = context.dataIndex;
+          const p = points[idx];
+          if (tab === "temp") return `${value}°C`;
+          if (tab === "rain") return value > 0 ? `${value}mm` : `${p.precipProb}%`;
+          if (tab === "wind") return `${value}k/h`;
+          if (tab === "humidity") return `${value}%`;
+          return value;
         },
       },
       tooltip: {
@@ -150,20 +190,13 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
     scales: {
       x: {
         grid: { color: "rgba(150, 150, 150, 0.1)" },
-        ticks: { font: { family: "Inter, system-ui, sans-serif", size: 11 } },
+        ticks: { font: { family: "Inter, system-ui, sans-serif", size: 11, weight: "bold" } },
       },
       y: {
         grid: { color: "rgba(150, 150, 150, 0.1)" },
         ticks: { font: { family: "Inter, system-ui, sans-serif", size: 11 } },
       },
     },
-  };
-
-  // Helper para converter ângulo do vento em seta
-  const getWindArrow = (deg?: number) => {
-    if (deg == null) return "↑";
-    const directions = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"];
-    return directions[Math.round(deg / 45) % 8];
   };
 
   return (
@@ -199,29 +232,51 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
           className={`hourly-tab-btn ${tab === "rain" ? "tab-rain-active" : ""}`}
           onClick={() => setTab("rain")}
         >
-          🌧️ Chuva
+          🌧️ Chuva (mm & %)
         </button>
         <button
           className={`hourly-tab-btn ${tab === "wind" ? "tab-wind-active" : ""}`}
           onClick={() => setTab("wind")}
         >
-          💨 Vento
+          💨 Vento (km/h & Direção)
         </button>
         <button
           className={`hourly-tab-btn ${tab === "humidity" ? "tab-hum-active" : ""}`}
           onClick={() => setTab("humidity")}
         >
-          💧 Umidade
+          💧 Umidade (%)
         </button>
       </div>
 
-      {/* Conteúdo: Modo Gráfico Chart.js com Point Styling */}
+      {/* Modo Gráfico Chart.js com DataLabels + Faixa de Informações por Hora */}
       {viewMode === "graph" ? (
-        <div className="hourly-chartjs-container" style={{ height: 260, position: "relative", marginTop: 10 }}>
-          <Line data={chartData} options={chartOptions} />
+        <div className="hourly-graph-area">
+          <div className="hourly-chartjs-container" style={{ height: 250, position: "relative", marginTop: 10 }}>
+            <Line data={chartData} options={chartOptions} />
+          </div>
+
+          {/* Faixa Horizontal com Todas as Informações (Clima, Temp, Chuva, Vento e Umidade por Hora) */}
+          <div className="hourly-chart-info-ribbon">
+            {points.map((p) => (
+              <div className="info-col-item" key={p.time}>
+                <span className="col-hour">{p.hourLabel}</span>
+                <span className="col-icon" title={p.conditionLabel}>{getConditionIcon(p.condition)}</span>
+                <span className="col-temp">{p.tempC}°C</span>
+                <span className="col-rain" title="Volume e Probabilidade de Chuva">
+                  🌧️ {p.precipMm ?? 0}mm ({p.precipProb}%)
+                </span>
+                <span className="col-wind" title="Velocidade e Direção do Vento">
+                  💨 {p.windKmh ?? 0}k/h {getWindArrow(p.windDirDeg)}
+                </span>
+                <span className="col-hum" title="Umidade Relativa">
+                  💧 {p.humidity ?? 0}%
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
-        /* Conteúdo: Modo Tabela */
+        /* Modo Tabela */
         <div className="hourly-table-wrap">
           <table className="hourly-data-table">
             <thead>
@@ -230,7 +285,7 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
                 <th>Condição</th>
                 <th>Temperatura</th>
                 <th>Chuva (mm / %)</th>
-                <th>Vento</th>
+                <th>Vento (km/h & Direção)</th>
                 <th>Umidade</th>
               </tr>
             </thead>
@@ -238,8 +293,11 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
               {points.map((p) => (
                 <tr key={p.time}>
                   <td><strong>{p.hourLabel}</strong></td>
-                  <td>{p.conditionLabel || p.condition}</td>
-                  <td>{p.tempC}°C</td>
+                  <td>
+                    <span style={{ marginRight: 6 }}>{getConditionIcon(p.condition)}</span>
+                    {p.conditionLabel || p.condition}
+                  </td>
+                  <td><strong>{p.tempC}°C</strong></td>
                   <td>{p.precipMm ?? 0} mm ({p.precipProb}%)</td>
                   <td>{p.windKmh ?? 0} km/h {getWindArrow(p.windDirDeg)}</td>
                   <td>{p.humidity ?? 0}%</td>
