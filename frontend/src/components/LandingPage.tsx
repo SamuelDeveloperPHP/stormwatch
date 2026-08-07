@@ -45,89 +45,83 @@ export default function LandingPage({
         </button>
       </nav>
 
-      {/* Hero Section com Grid de 2 Colunas */}
+      {/* Card de Geolocalização e Clima posicionado na margem esquerda da página */}
+      <aside className="landing-left-weather-card">
+        <div className="hero-weather-header">
+          <div className="hero-weather-loc">
+            <span className="loc-pin" aria-hidden="true">📍</span>
+            <div>
+              <strong>{place || snapshot?.location.label || "Curitiba, PR - Brasil"}</strong>
+              <div className="hero-weather-subloc">
+                {snapshot ? (
+                  <>lat.: {snapshot.location.lat.toFixed(4)}, long.: {snapshot.location.lon.toFixed(4)}</>
+                ) : (
+                  "Localização detectada automaticamente"
+                )}
+              </div>
+            </div>
+          </div>
+          <span className="hero-weather-live-tag">TEMPO AGORA</span>
+        </div>
+
+        {current ? (
+          <div className="hero-weather-main">
+            <div className="hero-weather-temp">{current.tempC}°</div>
+            <div className="hero-weather-meta">
+              <span className="hero-weather-cond">{current.conditionLabel}</span>
+              <span>Sensação {current.feelsLikeC}° · Umidade {current.humidity}%</span>
+              <span>Vento {current.windKmh} km/h</span>
+            </div>
+          </div>
+        ) : (
+          <div className="hero-weather-main">
+            <div className="hero-weather-temp">--°</div>
+            <div className="hero-weather-meta">
+              <span>Carregando dados meteorológicos…</span>
+            </div>
+          </div>
+        )}
+
+        {/* Previsão das Próximas Horas */}
+        <div className="hero-weather-hourly-title">
+          Previsão Próximas Horas <span style={{ fontWeight: 500, textTransform: "none" }}>(🌧️ Chance de Chuva)</span>
+        </div>
+        <div className="hero-weather-hourly">
+          {hourly.length > 0 ? (
+            hourly.slice(0, 7).map((h) => (
+              <div className="hero-hour-item" key={h.time}>
+                <span className="hero-hour-time">{h.hourLabel}</span>
+                <span className="hero-hour-temp">{h.tempC}°</span>
+                <span className="hero-hour-precip" title="Probabilidade de chuva">
+                  🌧️ {h.precipProb}%
+                </span>
+              </div>
+            ))
+          ) : (
+            <span className="muted" style={{ fontSize: 12 }}>Buscando previsão horária…</span>
+          )}
+        </div>
+      </aside>
+
+      {/* Hero Section Centralizada (Original) */}
       <header className="hero-section">
-        <div className="hero-grid">
-          {/* Coluna da Esquerda: Card de Geolocalização e Clima Tempo Agora */}
-          <div className="hero-weather-card">
-            <div className="hero-weather-header">
-              <div className="hero-weather-loc">
-                <span className="loc-pin" aria-hidden="true">📍</span>
-                <div>
-                  <strong>{place || snapshot?.location.label || "Curitiba, PR - Brasil"}</strong>
-                  <div className="hero-weather-subloc">
-                    {snapshot ? (
-                      <>lat.: {snapshot.location.lat.toFixed(4)}, long.: {snapshot.location.lon.toFixed(4)}</>
-                    ) : (
-                      "Localização detectada automaticamente"
-                    )}
-                  </div>
-                </div>
-              </div>
-              <span className="hero-weather-live-tag">TEMPO AGORA</span>
-            </div>
-
-            {current ? (
-              <div className="hero-weather-main">
-                <div className="hero-weather-temp">{current.tempC}°</div>
-                <div className="hero-weather-meta">
-                  <span className="hero-weather-cond">{current.conditionLabel}</span>
-                  <span>Sensação {current.feelsLikeC}° · Umidade {current.humidity}%</span>
-                  <span>Vento {current.windKmh} km/h</span>
-                </div>
-              </div>
-            ) : (
-              <div className="hero-weather-main">
-                <div className="hero-weather-temp">--°</div>
-                <div className="hero-weather-meta">
-                  <span>Carregando dados meteorológicos…</span>
-                </div>
-              </div>
-            )}
-
-            {/* Previsão das Próximas Horas */}
-            <div className="hero-weather-hourly-title">
-              Previsão Próximas Horas <span style={{ fontWeight: 500, textTransform: "none" }}>(🌧️ Chance de Chuva)</span>
-            </div>
-            <div className="hero-weather-hourly">
-              {hourly.length > 0 ? (
-                hourly.slice(0, 7).map((h) => (
-                  <div className="hero-hour-item" key={h.time}>
-                    <span className="hero-hour-time">{h.hourLabel}</span>
-                    <span className="hero-hour-temp">{h.tempC}°</span>
-                    <span className="hero-hour-precip" title="Probabilidade de chuva">
-                      🌧️ {h.precipProb}%
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <span className="muted" style={{ fontSize: 12 }}>Buscando previsão horária…</span>
-              )}
-            </div>
-
-          </div>
-
-          {/* Coluna da Direita: Título, Subtítulo e Ações */}
-          <div className="hero-content-col">
-            <div className="hero-badge">
-              <span className="hero-pulse" /> SATÉLITE NOAA GOES-19 EM TEMPO REAL
-            </div>
-            <h1 className="hero-title">
-              Prevenção Meteorológica de Alta Precisão para <span className="text-gradient">Obras & Eventos</span>
-            </h1>
-            <p className="hero-subtitle">
-              Monitore descargas atmosféricas em tempo real, proteja suas equipes no campo,
-              automatize alertas de paralisação e gere laudos de força maior para seguradoras.
-            </p>
-            <div className="hero-cta-group">
-              <button className="btn-hero-primary" onClick={onOpenApp}>
-                ⚡ Acessar Monitor Gratuito
-              </button>
-              <button className="btn-hero-secondary" onClick={scrollToPricing}>
-                💼 Ver Planos B2B para Empresas
-              </button>
-            </div>
-          </div>
+        <div className="hero-badge">
+          <span className="hero-pulse" /> SATÉLITE NOAA GOES-19 EM TEMPO REAL
+        </div>
+        <h1 className="hero-title">
+          Prevenção Meteorológica de Alta Precisão para <span className="text-gradient">Obras & Eventos</span>
+        </h1>
+        <p className="hero-subtitle">
+          Monitore descargas atmosféricas em tempo real, proteja suas equipes no campo,
+          automatize alertas de paralisação e gere laudos de força maior para seguradoras.
+        </p>
+        <div className="hero-cta-group">
+          <button className="btn-hero-primary" onClick={onOpenApp}>
+            ⚡ Acessar Monitor Gratuito
+          </button>
+          <button className="btn-hero-secondary" onClick={scrollToPricing}>
+            💼 Ver Planos B2B para Empresas
+          </button>
         </div>
 
         {/* Live Metrics Teaser Bar */}
@@ -153,6 +147,7 @@ export default function LandingPage({
           </div>
         </div>
       </header>
+
 
 
       {/* Use Cases Section */}
