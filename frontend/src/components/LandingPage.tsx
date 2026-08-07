@@ -86,20 +86,25 @@ export default function LandingPage({
             )}
 
             {/* Previsão das Próximas Horas */}
-            <div className="hero-weather-hourly-title">Previsão Próximas Horas</div>
+            <div className="hero-weather-hourly-title">
+              Previsão Próximas Horas <span style={{ fontWeight: 500, textTransform: "none" }}>(🌧️ Chance de Chuva)</span>
+            </div>
             <div className="hero-weather-hourly">
               {hourly.length > 0 ? (
                 hourly.slice(0, 7).map((h) => (
                   <div className="hero-hour-item" key={h.time}>
                     <span className="hero-hour-time">{h.hourLabel}</span>
                     <span className="hero-hour-temp">{h.tempC}°</span>
-                    <span className="hero-hour-precip">{h.precipProb}%</span>
+                    <span className="hero-hour-precip" title="Probabilidade de chuva">
+                      🌧️ {h.precipProb}%
+                    </span>
                   </div>
                 ))
               ) : (
                 <span className="muted" style={{ fontSize: 12 }}>Buscando previsão horária…</span>
               )}
             </div>
+
           </div>
 
           {/* Coluna da Direita: Título, Subtítulo e Ações */}

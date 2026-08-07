@@ -1286,10 +1286,16 @@ h1, h2, h3, h4 {
 }
 
 .hero-hour-precip {
-  font-size: 10px;
-  color: #38bdf8;
-  font-weight: 600;
+  font-size: 11px;
+  color: #0284c7;
+  font-weight: 700;
+  white-space: nowrap;
 }
+
+[data-theme="dark"] .hero-hour-precip {
+  color: #38bdf8;
+}
+
 
 /* Coluna Direita da Hero */
 .hero-content-col {
