@@ -68,6 +68,31 @@ export default function LandingPage({
         </div>
       </header>
 
+      {/* Live Metrics Teaser Bar (Logo abaixo da Hero Section) */}
+      <div className="hero-stats-bar-wrapper">
+        <div className="hero-stats-bar">
+          <div className="stat-item">
+            <span className="stat-value">NOAA GOES-19</span>
+            <span className="stat-label">Feed Orbital Oficial</span>
+          </div>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value">&lt; 30s</span>
+            <span className="stat-label">Latência de Atualização</span>
+          </div>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value">América do Sul</span>
+            <span className="stat-label">Cobertura de Satélite</span>
+          </div>
+          <div className="stat-divider" />
+          <div className="stat-item">
+            <span className="stat-value">NR-18 & Defesa Civil</span>
+            <span className="stat-label">Conformidade Operacional</span>
+          </div>
+        </div>
+      </div>
+
       {/* Seção Principal de Clima (Logo após o Título & CTAs da Hero) */}
       <section id="weather-section" className="landing-section weather-showcase-section">
         {/* Card 1: Tempo Agora + Widget Graficos Hora a Hora */}
@@ -204,31 +229,6 @@ export default function LandingPage({
           </div>
         </div>
       </section>
-
-      {/* Live Metrics Teaser Bar */}
-      <div className="hero-stats-bar-wrapper">
-        <div className="hero-stats-bar">
-          <div className="stat-item">
-            <span className="stat-value">NOAA GOES-19</span>
-            <span className="stat-label">Feed Orbital Oficial</span>
-          </div>
-          <div className="stat-divider" />
-          <div className="stat-item">
-            <span className="stat-value">&lt; 30s</span>
-            <span className="stat-label">Latência de Atualização</span>
-          </div>
-          <div className="stat-divider" />
-          <div className="stat-item">
-            <span className="stat-value">América do Sul</span>
-            <span className="stat-label">Cobertura de Satélite</span>
-          </div>
-          <div className="stat-divider" />
-          <div className="stat-item">
-            <span className="stat-value">NR-18 & Defesa Civil</span>
-            <span className="stat-label">Conformidade Operacional</span>
-          </div>
-        </div>
-      </div>
 
 
 
