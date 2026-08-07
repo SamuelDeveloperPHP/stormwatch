@@ -9,6 +9,22 @@ interface LandingPageProps {
   forecast?: Forecast | null;
 }
 
+/** Emoji para uma condição climática (evita repetir o ternário no JSX). */
+const conditionEmoji = (condition?: string): string => {
+  switch (condition) {
+    case "thunderstorm":
+      return "⛈️";
+    case "rain":
+      return "🌧️";
+    case "partly":
+      return "⛅";
+    case "clear":
+      return "☀️";
+    default:
+      return "☁️";
+  }
+};
+
 export default function LandingPage({
   onOpenApp,
   onOpenTerms,
@@ -136,17 +152,7 @@ export default function LandingPage({
             {current ? (
               <div className="now-inline-weather-data">
                 <div className="now-inline-temp-cond">
-                  <span className="now-inline-icon">
-                    {current.condition === "thunderstorm"
-                      ? "⛈️"
-                      : current.condition === "rain"
-                      ? "🌧️"
-                      : current.condition === "partly"
-                      ? "⛅"
-                      : current.condition === "clear"
-                      ? "☀️"
-                      : "☁️"}
-                  </span>
+                  <span className="now-inline-icon">{conditionEmoji(current.condition)}</span>
                   <span className="now-inline-temp">{current.tempC}°C</span>
                   <span className="now-inline-cond">{current.conditionLabel}</span>
                 </div>
@@ -187,17 +193,7 @@ export default function LandingPage({
                     </span>
                   </div>
 
-                  <div className="daily-card-icon">
-                    {day.condition === "thunderstorm"
-                      ? "⛈️"
-                      : day.condition === "rain"
-                      ? "🌧️"
-                      : day.condition === "partly"
-                      ? "⛅"
-                      : day.condition === "clear"
-                      ? "☀️"
-                      : "☁️"}
-                  </div>
+                  <div className="daily-card-icon">{conditionEmoji(day.condition)}</div>
                   <div className="daily-card-cond">{day.conditionLabel}</div>
 
                   <div className="daily-temp-range">
@@ -229,9 +225,6 @@ export default function LandingPage({
           </div>
         </div>
       </section>
-
-
-
 
       {/* Use Cases Section */}
       <section id="use-cases" className="landing-section">
@@ -279,69 +272,6 @@ export default function LandingPage({
               <li>✓ Laudos de paralisação por Força Maior</li>
             </ul>
           </div>
-        </div>
-      </section>
-
-      {/* Seção de Previsão de 5 Dias */}
-      <section id="5day-forecast" className="landing-section">
-        <div className="section-header">
-          <h2>Previsão para os Próximos 5 Dias em <strong>{place || snapshot?.location.label || "sua região"}</strong></h2>
-          <p>Planejamento de janelas operacionais com precipitação, vento e variação térmica.</p>
-        </div>
-
-        <div className="daily-forecast-grid">
-          {forecast?.daily && forecast.daily.length > 0 ? (
-            forecast.daily.map((day) => (
-              <div className="daily-card" key={day.date}>
-                <div className="daily-card-header">
-                  <strong>{day.dayLabel}</strong>
-                  <span className="daily-card-date">
-                    {new Date(day.date + "T00:00:00").toLocaleDateString("pt-BR", {
-                      day: "2-digit",
-                      month: "2-digit",
-                    })}
-                  </span>
-                </div>
-
-                <div className="daily-card-icon">
-                  {day.condition === "thunderstorm"
-                    ? "⛈️"
-                    : day.condition === "rain"
-                    ? "🌧️"
-                    : day.condition === "partly"
-                    ? "⛅"
-                    : day.condition === "clear"
-                    ? "☀️"
-                    : "☁️"}
-                </div>
-                <div className="daily-card-cond">{day.conditionLabel}</div>
-
-                <div className="daily-temp-range">
-                  <span className="temp-max" title="Temperatura Máxima">
-                    ↑ {day.tempMaxC}°C
-                  </span>
-                  <span className="temp-min" title="Temperatura Mínima">
-                    ↓ {day.tempMinC}°C
-                  </span>
-                </div>
-
-                <div className="daily-metrics">
-                  <div className="daily-metric-row">
-                    <span>🌧️ Chuva:</span>
-                    <strong>{day.precipSumMm} mm ({day.precipProbMax}%)</strong>
-                  </div>
-                  <div className="daily-metric-row">
-                    <span>💨 Vento Máx:</span>
-                    <strong>{day.windKmhMax} km/h</strong>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="muted" style={{ gridColumn: "1 / -1", textAlign: "center", padding: 20 }}>
-              Buscando dados de previsão estendida para 5 dias…
-            </div>
-          )}
         </div>
       </section>
 
