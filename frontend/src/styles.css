@@ -1087,11 +1087,15 @@ h1, h2, h3, h4 {
 
 /* Landing Page Estilos Comerciais B2B */
 .landing-container {
+  height: 100vh;
   min-height: 100vh;
   background: var(--bg);
   color: var(--ink);
   overflow-y: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
+
 
 .landing-nav {
   display: flex;
@@ -1554,6 +1558,46 @@ h1, h2, h3, h4 {
   gap: 16px;
   margin-top: 8px;
 }
+
+/* Botão Flutuante do WhatsApp Comercial */
+.whatsapp-float-btn {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  background: #25d366;
+  color: #ffffff;
+  text-decoration: none;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 18px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(37, 211, 102, 0.4);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.whatsapp-float-btn:hover {
+  background: #20ba5a;
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 12px 30px rgba(37, 211, 102, 0.6);
+  color: #ffffff;
+}
+
+.whatsapp-icon {
+  font-size: 18px;
+  animation: pulseIcon 2s infinite ease-in-out;
+}
+
+@keyframes pulseIcon {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
 
 
 

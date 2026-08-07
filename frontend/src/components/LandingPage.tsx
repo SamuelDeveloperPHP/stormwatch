@@ -223,11 +223,11 @@ export default function LandingPage({ onOpenApp, onOpenTerms }: LandingPageProps
             StormWatch Technologies
           </div>
           <p className="muted">
-            Sistemas avançados de monitoramento de descargas atmosféricas e segurança climática.
+            Sistemas avançados de monitoramento de descargas atmosféricas e segurança climática para empresas, obras e eventos.
           </p>
           <div className="footer-links">
             <button className="terms-trigger-btn" onClick={() => onOpenTerms("terms")}>
-              Termos de Uso
+              Termos de Uso e Responsabilidade
             </button>
             {" · "}
             <button className="terms-trigger-btn" onClick={() => onOpenTerms("privacy")}>
@@ -239,6 +239,19 @@ export default function LandingPage({ onOpenApp, onOpenTerms }: LandingPageProps
           </p>
         </div>
       </footer>
+
+      {/* Floating WhatsApp Button */}
+      <a
+        href="https://wa.me/5541988885871?text=Ol%C3%A1%2C%20gostaria%20de%20obter%20mais%20informa%C3%A7%C3%B5es%20sobre%20a%20aplica%C3%A7%C3%A3o%20StormWatch"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="whatsapp-float-btn"
+        title="Fale conosco no WhatsApp"
+      >
+        <span className="whatsapp-icon">💬</span>
+        <span className="whatsapp-text">Falar com Consultor</span>
+      </a>
     </div>
   );
 }
+
