@@ -1,4 +1,5 @@
 import React from "react";
+import holofotesImg from "../../assets/image/holofotes.png";
 
 // 🏗️ Ícone de Construção Civil & Gruas (Grua de Torre com Carga)
 export function CraneIcon({ size = 36, color = "currentColor" }: { size?: number; color?: string }) {
@@ -14,16 +15,14 @@ export function CraneIcon({ size = 36, color = "currentColor" }: { size?: number
   );
 }
 
-// 🎪 Ícone de Shows & Eventos ao Ar Livre (Palco de Festival com Tenda e Refletor)
-export function StageEventsIcon({ size = 36, color = "currentColor" }: { size?: number; color?: string }) {
+// 🎪 Ícone de Shows & Eventos ao Ar Livre (Holofotes de Estágio / Iluminação de Shows)
+export function StageEventsIcon({ size = 38 }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M2 21H22" stroke={color} strokeWidth="2" strokeLinecap="round" />
-      <path d="M12 3L2 10V21H22V10L12 3Z" stroke={color} strokeWidth="2" strokeLinejoin="round" />
-      <path d="M12 3V21" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M7 21V13C7 13 9.5 11 12 11C14.5 11 17 13 17 13V21" stroke={color} strokeWidth="1.5" />
-      <circle cx="12" cy="7" r="1.5" fill={color} />
-    </svg>
+    <img
+      src={holofotesImg}
+      alt="Shows & Eventos"
+      style={{ width: size, height: size, objectFit: "contain", display: "block" }}
+    />
   );
 }
 
