@@ -1,5 +1,29 @@
 import { useState } from "react";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  type ChartOptions,
+} from "chart.js";
+import { Line } from "react-chartjs-2";
 import type { Forecast } from "../types.ts";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 interface HourlyForecastWidgetProps {
   forecast: Forecast | null;
@@ -26,30 +50,124 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
   const points = forecast.hourly;
   const locationName = place || forecast.location.label || "Sua Localização";
 
-  // Helpers para min/max para escalar gráficos SVG
-  const values = points.map((p) => {
-    if (tab === "temp") return p.tempC;
-    if (tab === "rain") return p.precipMm ?? 0;
-    if (tab === "wind") return p.windKmh ?? 0;
-    return p.humidity ?? 0;
-  });
+  // Rótulos do eixo X (ex: "00:00", "02:00" ou "14h", "15h")
+  const labels = points.map((p) => p.hourLabel);
 
-  const minVal = Math.min(...values, 0);
-  const maxVal = Math.max(...values, tab === "temp" ? 30 : tab === "rain" ? 10 : tab === "wind" ? 50 : 100);
-  const range = maxVal - minVal || 1;
+  // Configurações visuais por aba (Cores e Point Styling oficiais Chart.js)
+  const getTabConfig = () => {
+    switch (tab) {
+      case "temp":
+        return {
+          title: "Temperatura (°C)",
+          unit: "°C",
+          borderColor: "#dc2626",
+          pointBgColor: "rgba(220, 38, 38, 0.4)",
+          pointBorderColor: "#dc2626",
+          fillBgColor: "rgba(220, 38, 38, 0.08)",
+          data: points.map((p) => p.tempC),
+        };
+      case "rain":
+        return {
+          title: "Chuva (mm)",
+          unit: " mm",
+          borderColor: "#0284c7",
+          pointBgColor: "rgba(2, 132, 199, 0.4)",
+          pointBorderColor: "#0284c7",
+          fillBgColor: "rgba(2, 132, 199, 0.08)",
+          data: points.map((p) => p.precipMm ?? 0),
+        };
+      case "wind":
+        return {
+          title: "Vento (km/h)",
+          unit: " km/h",
+          borderColor: "#65a30d",
+          pointBgColor: "rgba(101, 163, 13, 0.4)",
+          pointBorderColor: "#65a30d",
+          fillBgColor: "rgba(101, 163, 13, 0.08)",
+          data: points.map((p) => p.windKmh ?? 0),
+        };
+      case "humidity":
+        return {
+          title: "Umidade (%)",
+          unit: "%",
+          borderColor: "#0369a1",
+          pointBgColor: "rgba(3, 105, 161, 0.4)",
+          pointBorderColor: "#0369a1",
+          fillBgColor: "rgba(3, 105, 161, 0.08)",
+          data: points.map((p) => p.humidity ?? 0),
+        };
+    }
+  };
 
-  // Converte ângulo em seta de direção do vento
+  const cfg = getTabConfig();
+
+  // Dados do Chart.js com Point Styling oficial
+  const chartData = {
+    labels,
+    datasets: [
+      {
+        label: cfg.title,
+        data: cfg.data,
+        borderColor: cfg.borderColor,
+        borderWidth: 3,
+        tension: 0.35, // Curva suave
+        fill: true,
+        backgroundColor: cfg.fillBgColor,
+
+        // Point Styling (Oficial Chart.js Sample: circle translúcido com borda destacada)
+        pointStyle: "circle",
+        pointRadius: 9,
+        pointHoverRadius: 15,
+        pointBackgroundColor: cfg.pointBgColor,
+        pointBorderColor: cfg.pointBorderColor,
+        pointBorderWidth: 2.5,
+      },
+    ],
+  };
+
+  // Opções do Chart.js
+  const chartOptions: ChartOptions<"line"> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: true,
+        position: "top" as const,
+        labels: {
+          usePointStyle: true,
+          boxWidth: 10,
+          font: { family: "Inter, system-ui, sans-serif", size: 12, weight: 600 },
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => {
+            const idx = context.dataIndex;
+            const p = points[idx];
+            let extra = "";
+            if (tab === "rain") extra = ` (Prob. ${p.precipProb}%)`;
+            return `${cfg.title}: ${context.raw}${cfg.unit}${extra}`;
+          },
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: { color: "rgba(150, 150, 150, 0.1)" },
+        ticks: { font: { family: "Inter, system-ui, sans-serif", size: 11 } },
+      },
+      y: {
+        grid: { color: "rgba(150, 150, 150, 0.1)" },
+        ticks: { font: { family: "Inter, system-ui, sans-serif", size: 11 } },
+      },
+    },
+  };
+
+  // Helper para converter ângulo do vento em seta
   const getWindArrow = (deg?: number) => {
     if (deg == null) return "↑";
     const directions = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"];
     return directions[Math.round(deg / 45) % 8];
-  };
-
-  const getTabColor = () => {
-    if (tab === "temp") return "#dc2626";
-    if (tab === "rain") return "#0284c7";
-    if (tab === "wind") return "#65a30d";
-    return "#0369a1";
   };
 
   return (
@@ -62,7 +180,7 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
             className={`view-btn ${viewMode === "graph" ? "active" : ""}`}
             onClick={() => setViewMode("graph")}
           >
-            📈 Gráfico
+            📈 Gráfico (Chart.js)
           </button>
           <button
             className={`view-btn ${viewMode === "table" ? "active" : ""}`}
@@ -101,79 +219,10 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
         </button>
       </div>
 
-      {/* Conteúdo: Modo Gráfico */}
+      {/* Conteúdo: Modo Gráfico Chart.js com Point Styling */}
       {viewMode === "graph" ? (
-        <div className="hourly-graph-wrap">
-          <svg className="hourly-svg-chart" viewBox="0 0 700 180" preserveAspectRatio="none">
-            {/* Linha do gráfico SVG */}
-            <path
-              d={points
-                .map((_, idx) => {
-                  const val = values[idx];
-                  const x = (idx / (points.length - 1)) * 660 + 20;
-                  const y = 140 - ((val - minVal) / range) * 90;
-                  return `${idx === 0 ? "M" : "L"} ${x} ${y}`;
-                })
-                .join(" ")}
-              fill="none"
-              stroke={getTabColor()}
-              strokeWidth="3"
-              strokeLinecap="round"
-            />
-
-            {/* Pontos no gráfico */}
-            {points.map((p, idx) => {
-              const val = values[idx];
-              const x = (idx / (points.length - 1)) * 660 + 20;
-              const y = 140 - ((val - minVal) / range) * 90;
-              return (
-                <g key={p.time}>
-                  <circle cx={x} cy={y} r="4" fill={getTabColor()} stroke="#ffffff" strokeWidth="2" />
-                </g>
-              );
-            })}
-          </svg>
-
-          {/* Rótulos dos valores acima da linha */}
-          <div className="hourly-graph-labels">
-            {points.map((p) => {
-              return (
-                <div key={p.time} className="hourly-point-label">
-
-                  {tab === "temp" && (
-                    <>
-                      <span className="point-icon">
-                        {p.condition === "thunderstorm"
-                          ? "⛈️"
-                          : p.condition === "rain"
-                          ? "🌧️"
-                          : p.condition === "partly"
-                          ? "⛅"
-                          : p.condition === "clear"
-                          ? "☀️"
-                          : "☁️"}
-                      </span>
-                      <strong style={{ color: getTabColor() }}>{p.tempC}°C</strong>
-                    </>
-                  )}
-                  {tab === "rain" && (
-                    <strong style={{ color: getTabColor() }}>
-                      {p.precipMm ?? 0}mm <small style={{ display: "block", fontSize: 9 }}>({p.precipProb}%)</small>
-                    </strong>
-                  )}
-                  {tab === "wind" && (
-                    <>
-                      <span className="wind-arrow">{getWindArrow(p.windDirDeg)}</span>
-                      <strong style={{ color: getTabColor() }}>{p.windKmh ?? 0}km/h</strong>
-                    </>
-                  )}
-                  {tab === "humidity" && <strong style={{ color: getTabColor() }}>{p.humidity ?? 0}%</strong>}
-
-                  <span className="point-time">{p.hourLabel}</span>
-                </div>
-              );
-            })}
-          </div>
+        <div className="hourly-chartjs-container" style={{ height: 260, position: "relative", marginTop: 10 }}>
+          <Line data={chartData} options={chartOptions} />
         </div>
       ) : (
         /* Conteúdo: Modo Tabela */
