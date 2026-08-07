@@ -145,9 +145,13 @@ export default function App() {
         <LandingPage
           onOpenApp={() => setViewMode("monitor")}
           onOpenTerms={openTerms}
+          place={place}
+          snapshot={snapshot}
+          forecast={forecast}
         />
         <TermsModal
           isOpen={isTermsOpen}
+
           onClose={() => setIsTermsOpen(false)}
           defaultTab={termsTab}
         />
