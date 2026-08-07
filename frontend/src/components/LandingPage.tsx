@@ -1,5 +1,6 @@
 import type { Forecast, MonitorSnapshot } from "../types.ts";
 import HourlyForecastWidget from "./HourlyForecastWidget.tsx";
+import { CraneIcon, StageEventsIcon, IndustryPortIcon } from "./Icons.tsx";
 
 interface LandingPageProps {
   onOpenApp: () => void;
@@ -235,7 +236,9 @@ export default function LandingPage({
 
         <div className="use-cases-grid">
           <div className="use-case-card">
-            <div className="use-case-icon">🏗️</div>
+            <div className="use-case-icon">
+              <CraneIcon size={38} color="#0284c7" />
+            </div>
             <h3>Construção Civil & Gruas</h3>
             <p>
               Alertas de paralisação automática para trabalhos em andaimes, estaiamento e operação de guindastes conforme norma NR-18.
@@ -248,7 +251,9 @@ export default function LandingPage({
           </div>
 
           <div className="use-case-card">
-            <div className="use-case-icon">🎪</div>
+            <div className="use-case-icon">
+              <StageEventsIcon size={38} color="#ec4899" />
+            </div>
             <h3>Shows & Eventos ao Ar Livre</h3>
             <p>
               Proteção de multidões, palcos e estruturas temporárias. Cronômetro "Tudo Limpo" para retomada segura da programação.
@@ -261,7 +266,9 @@ export default function LandingPage({
           </div>
 
           <div className="use-case-card">
-            <div className="use-case-icon">🏭</div>
+            <div className="use-case-icon">
+              <IndustryPortIcon size={38} color="#f59e0b" />
+            </div>
             <h3>Mineração, Portos & Energia</h3>
             <p>
               Monitoramento de pátios de estocagem, linhas de transmissão de alta tensão e pátios de conteineres contra raios destrutivos.

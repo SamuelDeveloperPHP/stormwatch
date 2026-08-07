@@ -1565,15 +1565,22 @@ h1, h2, h3, h4 {
 }
 
 .use-case-icon {
-  font-size: 32px;
-  background: var(--chip);
-  width: 56px;
-  height: 56px;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 12px;
+  border-radius: 14px;
+  background: var(--chip);
   border: 1px solid var(--line);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transition: all 0.25s ease;
+}
+
+.use-case-card:hover .use-case-icon {
+  transform: scale(1.08);
+  border-color: var(--accent);
+  box-shadow: 0 6px 16px rgba(2, 132, 199, 0.2);
 }
 
 .use-case-card h3 {
@@ -1892,6 +1899,9 @@ h1, h2, h3, h4 {
 }
 
 .hourly-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   background: var(--chip);
   border: 1px solid var(--line);
   color: var(--ink-soft);
@@ -1905,38 +1915,45 @@ h1, h2, h3, h4 {
   transition: all 0.2s;
 }
 
+.tab-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+
 .hourly-tab-btn:hover {
   background: var(--line);
 }
 
 .tab-temp-active {
-  background: #fef2f2 !important;
-  color: #dc2626 !important;
-  border-color: #fca5a5 !important;
+  background: rgba(217, 89, 38, 0.1) !important;
+  color: #c2410c !important;
+  border-color: rgba(217, 89, 38, 0.45) !important;
 }
 
 .tab-rain-active {
-  background: #f0f9ff !important;
-  color: #0284c7 !important;
-  border-color: #7dd3fc !important;
+  background: rgba(57, 135, 229, 0.1) !important;
+  color: #1d5fb8 !important;
+  border-color: rgba(57, 135, 229, 0.45) !important;
 }
 
 .tab-wind-active {
-  background: #f7fee7 !important;
-  color: #65a30d !important;
-  border-color: #bef264 !important;
+  background: rgba(25, 158, 112, 0.1) !important;
+  color: #157a56 !important;
+  border-color: rgba(25, 158, 112, 0.45) !important;
 }
 
 .tab-hum-active {
-  background: #f0fdf4 !important;
-  color: #16a34a !important;
-  border-color: #86efac !important;
+  background: rgba(144, 133, 233, 0.12) !important;
+  color: #5b4bc4 !important;
+  border-color: rgba(144, 133, 233, 0.5) !important;
 }
 
-[data-theme="dark"] .tab-temp-active { background: rgba(220, 38, 38, 0.2) !important; color: #fca5a5 !important; }
-[data-theme="dark"] .tab-rain-active { background: rgba(2, 132, 199, 0.2) !important; color: #7dd3fc !important; }
-[data-theme="dark"] .tab-wind-active { background: rgba(101, 163, 13, 0.2) !important; color: #bef264 !important; }
-[data-theme="dark"] .tab-hum-active { background: rgba(22, 163, 74, 0.2) !important; color: #86efac !important; }
+[data-theme="dark"] .tab-temp-active { background: rgba(217, 89, 38, 0.22) !important; color: #f0a17e !important; border-color: rgba(217, 89, 38, 0.5) !important; }
+[data-theme="dark"] .tab-rain-active { background: rgba(57, 135, 229, 0.22) !important; color: #93c0f5 !important; border-color: rgba(57, 135, 229, 0.5) !important; }
+[data-theme="dark"] .tab-wind-active { background: rgba(25, 158, 112, 0.22) !important; color: #6fd3ab !important; border-color: rgba(25, 158, 112, 0.5) !important; }
+[data-theme="dark"] .tab-hum-active { background: rgba(144, 133, 233, 0.22) !important; color: #bcb3f2 !important; border-color: rgba(144, 133, 233, 0.5) !important; }
 
 /* SVG Graph */
 .hourly-graph-wrap {
