@@ -1204,7 +1204,47 @@ h1, h2, h3, h4 {
 .now-inline-temp-cond {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+.now-inline-icon {
+  font-size: 26px;
+}
+
+.operational-status-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.operational-status-pill.status-safe {
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.operational-status-pill.status-risk {
+  background: rgba(239, 68, 68, 0.12);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  animation: pulseGlow 2s infinite ease-in-out;
+}
+
+.card-mood-thunderstorm {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.04) 0%, var(--panel) 100%);
+  border-color: rgba(239, 68, 68, 0.25) !important;
+}
+
+.card-mood-rain {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.04) 0%, var(--panel) 100%);
+  border-color: rgba(2, 132, 199, 0.25) !important;
+}
+
+.card-mood-clear {
+  background: var(--panel);
 }
 
 .now-inline-temp {

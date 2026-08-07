@@ -71,7 +71,15 @@ export default function LandingPage({
       {/* Seção Principal de Clima (Logo após o Título & CTAs da Hero) */}
       <section id="weather-section" className="landing-section weather-showcase-section">
         {/* Card 1: Tempo Agora + Widget Graficos Hora a Hora */}
-        <div className="weather-now-card-full">
+        <div
+          className={`weather-now-card-full ${
+            current?.condition === "thunderstorm"
+              ? "card-mood-thunderstorm"
+              : current?.condition === "rain"
+              ? "card-mood-rain"
+              : "card-mood-clear"
+          }`}
+        >
           {/* Barra Horizontal Responsiva: Todas as informações do Tempo Agora na Mesma Linha */}
           <div className="hero-weather-now-inline">
             <div className="now-inline-loc-badge">
@@ -83,11 +91,37 @@ export default function LandingPage({
                 </span>
               </div>
               <span className="hero-weather-live-tag">TEMPO AGORA</span>
+
+              {/* Badge de Alerta Operacional B2B */}
+              <span
+                className={`operational-status-pill ${
+                  current?.condition === "thunderstorm" || current?.condition === "rain"
+                    ? "status-risk"
+                    : "status-safe"
+                }`}
+              >
+                {current?.condition === "thunderstorm"
+                  ? "🔴 Alerta NR-18: Risco de Raios / Paralisação"
+                  : current?.condition === "rain"
+                  ? "🟡 Atenção: Janela de Chuva no Campo"
+                  : "🟢 Janela Operacional Segura"}
+              </span>
             </div>
 
             {current ? (
               <div className="now-inline-weather-data">
                 <div className="now-inline-temp-cond">
+                  <span className="now-inline-icon">
+                    {current.condition === "thunderstorm"
+                      ? "⛈️"
+                      : current.condition === "rain"
+                      ? "🌧️"
+                      : current.condition === "partly"
+                      ? "⛅"
+                      : current.condition === "clear"
+                      ? "☀️"
+                      : "☁️"}
+                  </span>
                   <span className="now-inline-temp">{current.tempC}°C</span>
                   <span className="now-inline-cond">{current.conditionLabel}</span>
                 </div>
