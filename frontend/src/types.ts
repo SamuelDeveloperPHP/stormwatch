@@ -51,7 +51,25 @@ export interface HourlyPoint {
   hourLabel: string;
   tempC: number;
   precipProb: number;
+  precipMm?: number;
+  windKmh?: number;
+  windDirDeg?: number;
+  humidity?: number;
   condition: string;
+  conditionLabel?: string;
+  icon: string;
+}
+
+export interface DailyPoint {
+  date: string;
+  dayLabel: string;
+  tempMaxC: number;
+  tempMinC: number;
+  precipProbMax: number;
+  precipSumMm: number;
+  windKmhMax: number;
+  condition: string;
+  conditionLabel: string;
   icon: string;
 }
 
@@ -68,7 +86,9 @@ export interface Forecast {
     icon: string;
   };
   hourly: HourlyPoint[];
+  daily?: DailyPoint[];
 }
 
 export type StrikeFilter = "all" | "cg" | "high_intensity";
+
 
