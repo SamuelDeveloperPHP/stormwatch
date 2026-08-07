@@ -68,13 +68,15 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
     return "☁️";
   };
 
-  // Configurações por aba (Cores e Point Styling oficiais Chart.js)
+  // Configurações por aba (Cores, Títulos dos Eixos X/Y e Point Styling oficiais Chart.js)
   const getTabConfig = () => {
     switch (tab) {
       case "temp":
         return {
           title: "Temperatura (°C)",
+          yAxisTitle: "Temperatura (°C)",
           unit: "°C",
+          unitTick: "°C",
           borderColor: "#dc2626",
           pointBgColor: "rgba(220, 38, 38, 0.4)",
           pointBorderColor: "#dc2626",
@@ -84,7 +86,9 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
       case "rain":
         return {
           title: "Chuva (mm)",
+          yAxisTitle: "Volume de Precipitação (mm)",
           unit: " mm",
+          unitTick: " mm",
           borderColor: "#0284c7",
           pointBgColor: "rgba(2, 132, 199, 0.4)",
           pointBorderColor: "#0284c7",
@@ -94,7 +98,9 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
       case "wind":
         return {
           title: "Vento (km/h)",
+          yAxisTitle: "Velocidade do Vento (km/h)",
           unit: " km/h",
+          unitTick: " km/h",
           borderColor: "#65a30d",
           pointBgColor: "rgba(101, 163, 13, 0.4)",
           pointBorderColor: "#65a30d",
@@ -104,7 +110,9 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
       case "humidity":
         return {
           title: "Umidade (%)",
+          yAxisTitle: "Umidade Relativa do Ar (%)",
           unit: "%",
+          unitTick: "%",
           borderColor: "#0369a1",
           pointBgColor: "rgba(3, 105, 161, 0.4)",
           pointBorderColor: "#0369a1",
@@ -138,14 +146,16 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
     ],
   };
 
-  // Opções do Chart.js com DataLabels ativados flutuando sobre os pontos
+  // Opções do Chart.js com DataLabels e Títulos dos Eixos X e Y
   const chartOptions: ChartOptions<"line"> = {
     responsive: true,
     maintainAspectRatio: false,
     layout: {
       padding: {
-        top: 26, // Espaço extra no topo do gráfico para os números não cortarem
+        top: 26,
         bottom: 8,
+        left: 6,
+        right: 12,
       },
     },
     plugins: {
@@ -189,12 +199,29 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
     },
     scales: {
       x: {
+        title: {
+          display: true,
+          text: "Horário da Previsão",
+          color: "rgba(100, 116, 139, 0.9)",
+          font: { family: "Inter, system-ui, sans-serif", size: 12, weight: 700 },
+          padding: { top: 6 },
+        },
         grid: { color: "rgba(150, 150, 150, 0.1)" },
         ticks: { font: { family: "Inter, system-ui, sans-serif", size: 11, weight: "bold" } },
       },
       y: {
+        title: {
+          display: true,
+          text: cfg.yAxisTitle,
+          color: cfg.borderColor,
+          font: { family: "Inter, system-ui, sans-serif", size: 12, weight: 700 },
+          padding: { bottom: 6 },
+        },
         grid: { color: "rgba(150, 150, 150, 0.1)" },
-        ticks: { font: { family: "Inter, system-ui, sans-serif", size: 11 } },
+        ticks: {
+          font: { family: "Inter, system-ui, sans-serif", size: 11 },
+          callback: (val) => `${val}${cfg.unitTick}`,
+        },
       },
     },
   };
@@ -248,10 +275,10 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
         </button>
       </div>
 
-      {/* Modo Gráfico Chart.js com DataLabels + Faixa de Informações por Hora */}
+      {/* Modo Gráfico Chart.js com DataLabels + Títulos dos Eixos X e Y + Faixa de Informações por Hora */}
       {viewMode === "graph" ? (
         <div className="hourly-graph-area">
-          <div className="hourly-chartjs-container" style={{ height: 250, position: "relative", marginTop: 10 }}>
+          <div className="hourly-chartjs-container" style={{ height: 270, position: "relative", marginTop: 10 }}>
             <Line data={chartData} options={chartOptions} />
           </div>
 
