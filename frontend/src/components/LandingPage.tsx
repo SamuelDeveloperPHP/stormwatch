@@ -94,8 +94,11 @@ export default function LandingPage({
               <div className="hero-weather-temp">{current.tempC}°C</div>
               <div className="hero-weather-meta">
                 <span className="hero-weather-cond">{current.conditionLabel}</span>
-                <span>Sensação {current.feelsLikeC}°C · Umidade {current.humidity}%</span>
-                <span>Vento {current.windKmh} km/h</span>
+                <div className="hero-weather-pills-row">
+                  <span className="weather-pill">🌡️ Sensação <strong>{current.feelsLikeC}°C</strong></span>
+                  <span className="weather-pill">💧 Umidade <strong>{current.humidity}%</strong></span>
+                  <span className="weather-pill">💨 Vento <strong>{current.windKmh} km/h</strong></span>
+                </div>
               </div>
             </div>
           ) : (
