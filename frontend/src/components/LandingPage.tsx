@@ -72,43 +72,36 @@ export default function LandingPage({
       <section id="weather-section" className="landing-section weather-showcase-section">
         {/* Card 1: Tempo Agora + Widget Graficos Hora a Hora */}
         <div className="weather-now-card-full">
-          <div className="hero-weather-header">
-            <div className="hero-weather-loc">
+          {/* Barra Horizontal Responsiva: Todas as informações do Tempo Agora na Mesma Linha */}
+          <div className="hero-weather-now-inline">
+            <div className="now-inline-loc-badge">
               <span className="loc-pin" aria-hidden="true">📍</span>
-              <div>
+              <div className="now-inline-loc-text">
                 <strong>{place || snapshot?.location.label || "Curitiba, PR - Brasil"}</strong>
-                <div className="hero-weather-subloc">
-                  {snapshot ? (
-                    <>lat.: {snapshot.location.lat.toFixed(4)}, long.: {snapshot.location.lon.toFixed(4)}</>
-                  ) : (
-                    "Localização detectada automaticamente"
-                  )}
-                </div>
+                <span className="now-subloc-tag">
+                  {snapshot ? ` (${snapshot.location.lat.toFixed(2)}, ${snapshot.location.lon.toFixed(2)})` : ""}
+                </span>
               </div>
+              <span className="hero-weather-live-tag">TEMPO AGORA</span>
             </div>
-            <span className="hero-weather-live-tag">TEMPO AGORA</span>
-          </div>
 
-          {current ? (
-            <div className="hero-weather-main">
-              <div className="hero-weather-temp">{current.tempC}°C</div>
-              <div className="hero-weather-meta">
-                <span className="hero-weather-cond">{current.conditionLabel}</span>
-                <div className="hero-weather-pills-row">
+            {current ? (
+              <div className="now-inline-weather-data">
+                <div className="now-inline-temp-cond">
+                  <span className="now-inline-temp">{current.tempC}°C</span>
+                  <span className="now-inline-cond">{current.conditionLabel}</span>
+                </div>
+
+                <div className="now-inline-pills-group">
                   <span className="weather-pill">🌡️ Sensação <strong>{current.feelsLikeC}°C</strong></span>
                   <span className="weather-pill">💧 Umidade <strong>{current.humidity}%</strong></span>
                   <span className="weather-pill">💨 Vento <strong>{current.windKmh} km/h</strong></span>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="hero-weather-main">
-              <div className="hero-weather-temp">--°</div>
-              <div className="hero-weather-meta">
-                <span>Carregando dados meteorológicos…</span>
-              </div>
-            </div>
-          )}
+            ) : (
+              <div className="muted" style={{ fontSize: 13 }}>Carregando dados meteorológicos em tempo real…</div>
+            )}
+          </div>
 
           {/* Gráficos hora a hora com as 4 abas (Temperatura, Chuva mm, Vento, Umidade) */}
           <HourlyForecastWidget forecast={forecast ?? null} place={place} />
