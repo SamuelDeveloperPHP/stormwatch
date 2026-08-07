@@ -69,11 +69,11 @@ export default function LandingPage({
           <span className="hero-pulse" /> SATÉLITE NOAA GOES-19 EM TEMPO REAL
         </div>
         <h1 className="hero-title">
-          Prevenção Meteorológica de <span className="text-gradient">Alta Precisão</span>
+          Prevenção Meteorológica de <br></br><span className="text-gradient">Alta Precisão</span>
         </h1>
         <p className="hero-subtitle">
           Monitore descargas atmosféricas em tempo real, proteja suas equipes no campo,
-          automatize alertas de paralisação e gere laudos de força maior para seguradoras.
+          automatize alertas de paralisação e gere laudos de força maior.
         </p>
         <div className="hero-cta-group">
           <button className="btn-hero-primary" onClick={onOpenApp}>
