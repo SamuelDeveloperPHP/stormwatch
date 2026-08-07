@@ -36,20 +36,20 @@
 }
 
 [data-theme="light"] {
-  --bg: #eef2f8;
+  --bg: #f8fafc;
   --bg-elev: #ffffff;
   --panel: #ffffff;
-  --panel-solid: #f8fafc;
-  --chip: #f1f5fb;
-  --line: rgba(30, 50, 90, 0.14);
-  --line-bright: rgba(37, 99, 235, 0.3);
+  --panel-solid: #ffffff;
+  --chip: #f1f5f9;
+  --line: #cbd5e1;
+  --line-bright: rgba(37, 99, 235, 0.4);
 
-  --ink: #11203f;
-  --ink-soft: #44557a;
-  --ink-mute: #7b87a4;
+  --ink: #0f172a;
+  --ink-soft: #334155;
+  --ink-mute: #64748b;
 
   --accent: #2563eb;
-  --accent-bright: #2563eb;
+  --accent-bright: #1d4ed8;
   --accent-glow: rgba(37, 99, 235, 0.15);
 
   --safe: #16a34a;
@@ -64,7 +64,7 @@
   --alert-bg: #fee2e2;
   --alert-border: #fca5a5;
 
-  --shadow: 0 1px 3px rgba(20, 40, 90, 0.08);
+  --shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.06), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
 }
 
 * {
@@ -1144,77 +1144,161 @@ h1, h2, h3, h4 {
 .btn-primary-glow:hover {
   background: var(--accent-bright);
   transform: translateY(-1px);
-}/* Seção Principal de Clima (Logo após Hero Title & CTAs - Posição Elevada) */
+}/* Seção Principal de Clima */
 .weather-showcase-section {
   max-width: 1140px;
-  margin: 0 auto 30px;
+  margin: 48px auto 40px;
   padding: 0 20px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 32px;
 }
 
 .weather-now-card-full {
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 20px;
-  padding: 24px 28px;
+  border-radius: 24px;
+  padding: 28px 32px;
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
-/* Barra Horizontal Responsiva: Todas as Informações na Mesma Linha */
-.hero-weather-now-inline {
+/* Layout Estruturado do Tempo Agora em 2 Níveis */
+.hero-weather-now-container {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 16px;
-  padding-bottom: 16px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
   border-bottom: 1px solid var(--line);
 }
 
-.now-inline-loc-badge {
+.now-card-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.now-loc-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.now-loc-info .loc-name {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.now-subloc-coords {
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.now-status-group {
   display: flex;
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
 }
 
-.now-inline-loc-text {
-  font-size: 13px;
-  color: var(--ink);
-}
-
-.now-subloc-tag {
-  font-size: 11px;
-  color: var(--ink-soft);
-  font-weight: normal;
-}
-
-.now-inline-weather-data {
+.now-card-main-bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 20px;
   flex-wrap: wrap;
 }
 
-.now-inline-temp-cond {
+.now-temp-block {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 14px;
 }
 
 .now-inline-icon {
-  font-size: 26px;
+  font-size: 38px;
+  line-height: 1;
+}
+
+.now-temp-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.now-big-temp {
+  font-family: var(--font-display);
+  font-size: 38px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ink);
+  letter-spacing: -0.04em;
+}
+
+.now-cond-desc {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  margin-top: 3px;
+}
+
+.now-metrics-cluster {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.weather-pill-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  background: var(--chip);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.weather-pill-card:hover {
+  border-color: var(--line-bright);
+  transform: translateY(-1px);
+}
+
+.pill-icon {
+  font-size: 16px;
+}
+
+.pill-content {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+}
+
+.pill-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ink-mute);
+  font-weight: 600;
+}
+
+.pill-content strong {
+  font-size: 13px;
+  color: var(--ink);
+  font-weight: 700;
 }
 
 .operational-status-pill {
   font-size: 11px;
   font-weight: 700;
-  padding: 3px 10px;
+  padding: 5px 12px;
   border-radius: 999px;
   letter-spacing: 0.02em;
   white-space: nowrap;
@@ -1480,41 +1564,47 @@ h1, h2, h3, h4 {
 
 
 
-/* Stats Bar */
+/* Stats Bar Integrada à Hero */
 .hero-stats-bar {
   display: flex;
   align-items: center;
   justify-content: space-around;
   background: var(--panel);
   border: 1px solid var(--line);
-  padding: 20px 30px;
-  border-radius: 16px;
+  padding: 16px 28px;
+  border-radius: 999px;
   width: 100%;
+  max-width: 860px;
+  margin: 36px auto 0;
   backdrop-filter: blur(12px);
-  box-shadow: var(--shadow);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04);
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  text-align: center;
+  gap: 2px;
 }
 
 .stat-value {
   font-family: var(--font-display);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--ink);
+  letter-spacing: -0.01em;
 }
 
 .stat-label {
   font-size: 11px;
   color: var(--ink-mute);
+  font-weight: 500;
 }
 
 .stat-divider {
   width: 1px;
-  height: 30px;
+  height: 24px;
   background: var(--line);
 }
 
