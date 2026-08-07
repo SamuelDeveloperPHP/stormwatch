@@ -156,8 +156,6 @@ export function IntensitySummaryPanel({
   );
 }
 
-import HourlyForecastWidget from "./HourlyForecastWidget.tsx";
-
 export function ForecastPanel({ forecast, place }: { forecast: Forecast | null; place?: string }) {
   if (!forecast) {
     return (
@@ -168,6 +166,7 @@ export function ForecastPanel({ forecast, place }: { forecast: Forecast | null; 
     );
   }
   const c = forecast.current;
+  const hourly = forecast.hourly ?? [];
   return (
     <div className="card">
       <h3>Tempo agora em {place || forecast.location.label}</h3>
@@ -180,7 +179,31 @@ export function ForecastPanel({ forecast, place }: { forecast: Forecast | null; 
         </div>
       </div>
 
-      <HourlyForecastWidget forecast={forecast} place={place} />
+      <div
+        className="hourly-title"
+        style={{
+          marginTop: 12,
+          marginBottom: 8,
+          fontSize: 11,
+          fontWeight: 700,
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          color: "var(--ink-soft)",
+        }}
+      >
+        Previsão Próximas Horas
+      </div>
+      <div className="hourly">
+        {hourly.slice(0, 8).map((h) => (
+          <div className="hour-item" key={h.time}>
+            <span className="hour-time">{h.hourLabel}</span>
+            <span className="hour-temp">{h.tempC}°</span>
+            <span className="hour-precip" style={{ fontSize: 10, color: "#0284c7", fontWeight: 700 }}>
+              🌧️ {h.precipProb}%
+            </span>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
