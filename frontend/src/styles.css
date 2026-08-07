@@ -1144,144 +1144,39 @@ h1, h2, h3, h4 {
 .btn-primary-glow:hover {
   background: var(--accent-bright);
   transform: translateY(-1px);
+}/* Seção Principal de Clima (Logo após Hero Title & CTAs) */
+.weather-showcase-section {
+  max-width: 1140px;
+  margin: 0 auto 40px;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
 }
 
-/* Card Climatológico na Margem Esquerda da Página (Fora da Hero Centralizada) */
-.landing-left-weather-card {
-  position: absolute;
-  top: 90px;
-  left: 32px;
-  width: 450px;
+.weather-now-card-full {
+  background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 20px;
+  border-radius: 20px;
+  padding: 28px;
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  text-align: left;
-  z-index: 10;
-  backdrop-filter: blur(12px);
-  transition: transform 0.2s;
-  background-color: rgba(99, 133, 202, 0.15);
+  gap: 20px;
 }
 
-.landing-left-weather-card:hover {
-  border-color: var(--line-bright);
-}
-
-.hero-weather-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--line);
-}
-
-.hero-weather-loc {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 12px;
-  color: var(--ink);
-}
-
-.hero-weather-subloc {
-  font-size: 10px;
-  color: var(--ink-soft);
-  margin-top: 2px;
-}
-
-.hero-weather-live-tag {
-  font-size: 9px;
-  font-weight: 800;
-  background: var(--accent-glow);
-  color: var(--accent);
-  border: 1px solid var(--line-bright);
-  padding: 2px 7px;
-  border-radius: 6px;
-  white-space: nowrap;
-  letter-spacing: 0.05em;
-}
-
-.hero-weather-main {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.hero-weather-temp {
-  font-family: var(--font-display);
-  font-size: 46px;
-  font-weight: 800;
-  line-height: 1;
-  color: var(--ink);
-  letter-spacing: -0.04em;
-}
-
-.hero-weather-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  font-size: 11px;
-  color: var(--ink-soft);
-}
-
-.hero-weather-cond {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.hero-weather-hourly-title {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--ink-mute);
-  margin-top: 2px;
-}
-
-.hero-weather-hourly {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding-bottom: 4px;
-}
-
-.hero-hour-item {
-  background: var(--chip);
+.five-day-card-full {
+  background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 6px 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  min-width: 48px;
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: var(--shadow);
 }
 
-.hero-hour-time {
-  font-size: 9px;
-  color: var(--ink--line);
-}
-
-.hero-hour-temp {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.hero-hour-precip {
-  font-size: 10px;
-  color: #0284c7;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-[data-theme="dark"] .hero-hour-precip {
-  color: #38bdf8;
+.hero-stats-bar-wrapper {
+  max-width: 1140px;
+  margin: 0 auto 40px;
+  padding: 0 20px;
 }
 
 /* Hero Section Centralizada */
@@ -1290,7 +1185,7 @@ h1, h2, h3, h4 {
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 70px 20px 50px;
+  padding: 60px 20px 30px;
   max-width: 860px;
   margin: 0 auto;
 }

@@ -1,4 +1,5 @@
 import type { Forecast, MonitorSnapshot } from "../types.ts";
+import HourlyForecastWidget from "./HourlyForecastWidget.tsx";
 
 interface LandingPageProps {
   onOpenApp: () => void;
@@ -21,7 +22,6 @@ export default function LandingPage({
   };
 
   const current = forecast?.current;
-  const hourly = forecast?.hourly ?? [];
 
   return (
     <div className="landing-container">
@@ -33,6 +33,7 @@ export default function LandingPage({
         </div>
 
         <div className="landing-nav-links">
+          <a href="#weather-section">Previsão Tempo</a>
           <a href="#use-cases">Casos de Uso</a>
           <a href="#pricing-section">Planos & Preços</a>
           <button className="terms-trigger-btn" onClick={() => onOpenTerms("terms")}>
@@ -45,71 +46,13 @@ export default function LandingPage({
         </button>
       </nav>
 
-      {/* Card de Geolocalização e Clima posicionado na margem esquerda da página */}
-      <aside className="landing-left-weather-card">
-        <div className="hero-weather-header">
-          <div className="hero-weather-loc">
-            <span className="loc-pin" aria-hidden="true">📍</span>
-            <div>
-              <strong>{place || snapshot?.location.label || "Curitiba, PR - Brasil"}</strong>
-              <div className="hero-weather-subloc">
-                {snapshot ? (
-                  <>lat.: {snapshot.location.lat.toFixed(4)}, long.: {snapshot.location.lon.toFixed(4)}</>
-                ) : (
-                  "Localização detectada automaticamente"
-                )}
-              </div>
-            </div>
-          </div>
-          <span className="hero-weather-live-tag">TEMPO AGORA</span>
-        </div>
-
-        {current ? (
-          <div className="hero-weather-main">
-            <div className="hero-weather-temp">{current.tempC}°</div>
-            <div className="hero-weather-meta">
-              <span className="hero-weather-cond">{current.conditionLabel}</span>
-              <span>Sensação {current.feelsLikeC}° · Umidade {current.humidity}%</span>
-              <span>Vento {current.windKmh} km/h</span>
-            </div>
-          </div>
-        ) : (
-          <div className="hero-weather-main">
-            <div className="hero-weather-temp">--°</div>
-            <div className="hero-weather-meta">
-              <span>Carregando dados meteorológicos…</span>
-            </div>
-          </div>
-        )}
-
-        {/* Previsão das Próximas Horas */}
-        <div className="hero-weather-hourly-title">
-          Previsão Próximas Horas <span style={{ fontWeight: 500, textTransform: "none" }}>(🌧️ Chance de Chuva)</span>
-        </div>
-        <div className="hero-weather-hourly">
-          {hourly.length > 0 ? (
-            hourly.slice(0, 7).map((h) => (
-              <div className="hero-hour-item" key={h.time}>
-                <span className="hero-hour-time">{h.hourLabel}</span>
-                <span className="hero-hour-temp">{h.tempC}°</span>
-                <span className="hero-hour-precip" title="Probabilidade de chuva">
-                  🌧️ {h.precipProb}%
-                </span>
-              </div>
-            ))
-          ) : (
-            <span className="muted" style={{ fontSize: 12 }}>Buscando previsão horária…</span>
-          )}
-        </div>
-      </aside>
-
-      {/* Hero Section Centralizada (Original) */}
+      {/* Hero Section Header */}
       <header className="hero-section">
         <div className="hero-badge">
           <span className="hero-pulse" /> SATÉLITE NOAA GOES-19 EM TEMPO REAL
         </div>
         <h1 className="hero-title">
-          Prevenção Meteorológica de Alta Precisão para <span className="text-gradient">Obras & Eventos</span>
+          Prevenção Meteorológica de <span className="text-gradient">Alta Precisão</span>
         </h1>
         <p className="hero-subtitle">
           Monitore descargas atmosféricas em tempo real, proteja suas equipes no campo,
@@ -123,8 +66,117 @@ export default function LandingPage({
             💼 Ver Planos B2B para Empresas
           </button>
         </div>
+      </header>
 
-        {/* Live Metrics Teaser Bar */}
+      {/* Seção Principal de Clima (Logo após o Título & CTAs da Hero) */}
+      <section id="weather-section" className="landing-section weather-showcase-section">
+        {/* Card 1: Tempo Agora + Widget Graficos Hora a Hora */}
+        <div className="weather-now-card-full">
+          <div className="hero-weather-header">
+            <div className="hero-weather-loc">
+              <span className="loc-pin" aria-hidden="true">📍</span>
+              <div>
+                <strong>{place || snapshot?.location.label || "Curitiba, PR - Brasil"}</strong>
+                <div className="hero-weather-subloc">
+                  {snapshot ? (
+                    <>lat.: {snapshot.location.lat.toFixed(4)}, long.: {snapshot.location.lon.toFixed(4)}</>
+                  ) : (
+                    "Localização detectada automaticamente"
+                  )}
+                </div>
+              </div>
+            </div>
+            <span className="hero-weather-live-tag">TEMPO AGORA</span>
+          </div>
+
+          {current ? (
+            <div className="hero-weather-main">
+              <div className="hero-weather-temp">{current.tempC}°C</div>
+              <div className="hero-weather-meta">
+                <span className="hero-weather-cond">{current.conditionLabel}</span>
+                <span>Sensação {current.feelsLikeC}°C · Umidade {current.humidity}%</span>
+                <span>Vento {current.windKmh} km/h</span>
+              </div>
+            </div>
+          ) : (
+            <div className="hero-weather-main">
+              <div className="hero-weather-temp">--°</div>
+              <div className="hero-weather-meta">
+                <span>Carregando dados meteorológicos…</span>
+              </div>
+            </div>
+          )}
+
+          {/* Gráficos hora a hora com as 4 abas (Temperatura, Chuva mm, Vento, Umidade) */}
+          <HourlyForecastWidget forecast={forecast ?? null} place={place} />
+        </div>
+
+        {/* Card 2: Previsão para os Próximos 5 Dias */}
+        <div className="five-day-card-full" id="5day-forecast" style={{ marginTop: 40 }}>
+          <div className="section-header" style={{ marginBottom: 24 }}>
+            <h2>Previsão para os Próximos 5 Dias em <strong>{place || snapshot?.location.label || "sua região"}</strong></h2>
+            <p>Planejamento de janelas operacionais com precipitação, vento e variação térmica.</p>
+          </div>
+
+          <div className="daily-forecast-grid">
+            {forecast?.daily && forecast.daily.length > 0 ? (
+              forecast.daily.map((day) => (
+                <div className="daily-card" key={day.date}>
+                  <div className="daily-card-header">
+                    <strong>{day.dayLabel}</strong>
+                    <span className="daily-card-date">
+                      {new Date(day.date + "T00:00:00").toLocaleDateString("pt-BR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                      })}
+                    </span>
+                  </div>
+
+                  <div className="daily-card-icon">
+                    {day.condition === "thunderstorm"
+                      ? "⛈️"
+                      : day.condition === "rain"
+                      ? "🌧️"
+                      : day.condition === "partly"
+                      ? "⛅"
+                      : day.condition === "clear"
+                      ? "☀️"
+                      : "☁️"}
+                  </div>
+                  <div className="daily-card-cond">{day.conditionLabel}</div>
+
+                  <div className="daily-temp-range">
+                    <span className="temp-max" title="Temperatura Máxima">
+                      ↑ {day.tempMaxC}°C
+                    </span>
+                    <span className="temp-min" title="Temperatura Mínima">
+                      ↓ {day.tempMinC}°C
+                    </span>
+                  </div>
+
+                  <div className="daily-metrics">
+                    <div className="daily-metric-row">
+                      <span>🌧️ Chuva:</span>
+                      <strong>{day.precipSumMm} mm ({day.precipProbMax}%)</strong>
+                    </div>
+                    <div className="daily-metric-row">
+                      <span>💨 Vento Máx:</span>
+                      <strong>{day.windKmhMax} km/h</strong>
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="muted" style={{ gridColumn: "1 / -1", textAlign: "center", padding: 20 }}>
+                Buscando dados de previsão estendida para 5 dias…
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Live Metrics Teaser Bar */}
+      <div className="hero-stats-bar-wrapper">
         <div className="hero-stats-bar">
           <div className="stat-item">
             <span className="stat-value">NOAA GOES-19</span>
@@ -146,7 +198,8 @@ export default function LandingPage({
             <span className="stat-label">Conformidade Operacional</span>
           </div>
         </div>
-      </header>
+      </div>
+
 
 
 
