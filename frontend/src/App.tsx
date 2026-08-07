@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchForecast, fetchLightning, type Coords } from "./api.ts";
-import type { Forecast, MonitorSnapshot } from "./types.ts";
+import type { Forecast, MonitorSnapshot, StrikeFilter } from "./types.ts";
 import StormMap from "./components/StormMap.tsx";
-import { ForecastPanel, StatusPanel, StrikeList } from "./components/Panels.tsx";
+import { ForecastPanel, IntensitySummaryPanel, StatusPanel, StrikeList } from "./components/Panels.tsx";
+import TermsModal from "./components/TermsModal.tsx";
+import StrikeInfoModal from "./components/StrikeInfoModal.tsx";
 
-const POLL_MS = 15000; // a cada 15s
+const POLL_MS = 30000; // a cada 30s (casa com o polling da NOAA no ingestor)
 
 type GeoState = "pending" | "ok" | "denied" | "unsupported";
 
@@ -20,10 +22,41 @@ export default function App() {
   const [forecast, setForecast] = useState<Forecast | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [geo, setGeo] = useState<GeoState>("pending");
+  // Cidade/estado derivados das coordenadas (reverse geocoding).
+  const [place, setPlace] = useState<string>("");
   const timer = useRef<number | null>(null);
   // Ref para que o intervalo de polling sempre use as coordenadas mais recentes
   // sem precisar reiniciar o setInterval quando a localização chega.
   const coordsRef = useRef<Coords | undefined>(undefined);
+
+  // Estado para o tema Dark / Light
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    return (localStorage.getItem("stormwatch_theme") as "dark" | "light") || "dark";
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("stormwatch_theme", theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
+  };
+
+  // Estado para filtro de exibição de raios no mapa e lista
+  const [strikeFilter, setStrikeFilter] = useState<StrikeFilter>("all");
+
+  // Estado para controle do modal de Termos de Uso e Privacidade
+  const [isTermsOpen, setIsTermsOpen] = useState(false);
+  const [termsTab, setTermsTab] = useState<"terms" | "privacy">("terms");
+
+  // Estado para controle do modal educativo "Guia de Raios"
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+
+  const openTerms = (tab: "terms" | "privacy" = "terms") => {
+    setTermsTab(tab);
+    setIsTermsOpen(true);
+  };
 
   async function tick() {
     try {
@@ -66,6 +99,39 @@ export default function App() {
     };
   }, []);
 
+  // Reverse geocoding: transforma lat/lon em "Cidade, UF" (API gratuita, sem chave).
+  // Só refaz quando as coordenadas mudam (não a cada polling).
+  const lat = snapshot?.location.lat;
+  const lon = snapshot?.location.lon;
+  useEffect(() => {
+    if (lat == null || lon == null) return;
+    const ctrl = new AbortController();
+    fetch(
+      `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=pt`,
+      { signal: ctrl.signal }
+    )
+      .then((r) => r.json())
+      .then((d) => {
+        const adm = d.localityInfo?.administrative || [];
+        // Município (adminLevel 8 no Brasil) é a "cidade"; cai para locality/city.
+        const city =
+          adm.find((a: { adminLevel: number; name: string }) => a.adminLevel === 8)
+            ?.name ||
+          d.locality ||
+          d.city ||
+          "";
+        const uf =
+          (d.principalSubdivisionCode || "").split("-").pop() ||
+          d.principalSubdivision ||
+          "";
+        const country = d.countryName || "";
+        const cityUf = [city, uf].filter(Boolean).join(", ");
+        setPlace([cityUf, country].filter(Boolean).join(" - "));
+      })
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [lat, lon]);
+
   const geoNote = GEO_NOTE[geo];
 
   return (
@@ -74,28 +140,104 @@ export default function App() {
         <div className="brand">
           <span className="brand-dot" />
           StormWatch
+          <span className="brand-badge">LIVE GOES-19</span>
         </div>
+
         <div className="topbar-loc">
-          {geo === "ok" ? "Minha localização" : snapshot?.location.label ?? "—"}
+          <span className="loc-pin" aria-hidden="true">📍</span>
+          <strong>{place || snapshot?.location.label || "—"}</strong>
           {snapshot && (
-            <> · atualizado {new Date(snapshot.evaluatedAt).toLocaleTimeString("pt-BR")}</>
+            <span className="loc-coords">
+              | geolocalização lat.:{" "}
+              {snapshot.location.lat.toFixed(4)}, long.: {snapshot.location.lon.toFixed(4)}
+            </span>
           )}
+        </div>
+
+        <div className="topbar-actions">
+          <button
+            className="theme-toggle-btn"
+            onClick={toggleTheme}
+            title="Alternar entre tema escuro e claro"
+          >
+            {theme === "dark" ? "☀️ Modo Claro" : "🌙 Modo Escuro"}
+          </button>
+          <div className="topbar-time">
+            {snapshot && (
+              <>
+                <span className="topbar-time-value">
+                  {new Date(snapshot.evaluatedAt).toLocaleTimeString("pt-BR")}
+                </span>
+                <span className="topbar-time-note">
+                  Atualizado a cada 30s
+                </span>
+              </>
+            )}
+          </div>
         </div>
       </header>
 
       <aside className="sidebar">
-        {error && <div className="error-banner">{error}</div>}
-        {geoNote && <div className="geo-note">{geoNote}</div>}
-        <StatusPanel snapshot={snapshot} feedError={!!error} />
-        <ForecastPanel forecast={forecast} />
-        <StrikeList snapshot={snapshot} />
-        <p className="muted">
-          Raios: NOAA GOES-19 GLM (tempo quase real, América do Sul). Previsão:
-          Open-Meteo. Alertas saem por webhook genérico.
-        </p>
+        <div className="sidebar-col sidebar-col1">
+          {error && <div className="error-banner">{error}</div>}
+          {geoNote && <div className="geo-note">{geoNote}</div>}
+          <StatusPanel snapshot={snapshot} feedError={!!error} />
+          <IntensitySummaryPanel snapshot={snapshot} onOpenInfo={() => setIsInfoOpen(true)} />
+          <ForecastPanel forecast={forecast} />
+        </div>
+
+        <div className="sidebar-col sidebar-col2">
+          <StrikeList
+            snapshot={snapshot}
+            filter={strikeFilter}
+            onFilterChange={setStrikeFilter}
+            onOpenInfo={() => setIsInfoOpen(true)}
+          />
+          <p className="muted">
+            Raios: NOAA GOES-19 GLM (tempo quase real, América do Sul). Previsão:
+            Open-Meteo. Alertas saem por webhook genérico.
+          </p>
+          <details className="terms">
+            <summary>Termos de uso e responsabilidade</summary>
+            <p>
+              Este serviço é fornecido gratuitamente “como está”, apenas como apoio informativo,
+              sem garantia de precisão, disponibilidade ou tempo real. As decisões de
+              segurança são de <strong>responsabilidade exclusiva do usuário</strong> e não
+              substituem protocolos oficiais da Defesa Civil.
+            </p>
+            <p style={{ marginTop: 8 }}>
+              <button className="terms-trigger-btn" onClick={() => openTerms("terms")}>
+                Ver Termos de Uso
+              </button>
+              {" · "}
+              <button className="terms-trigger-btn" onClick={() => openTerms("privacy")}>
+                Política de Privacidade
+              </button>
+            </p>
+          </details>
+          <p className="copyright">
+            © {new Date().getFullYear()} NexoCore Tecnologia LTDA. Todos os direitos
+            reservados.
+          </p>
+        </div>
       </aside>
 
-      <StormMap snapshot={snapshot} />
+      <StormMap snapshot={snapshot} filter={strikeFilter} theme={theme} />
+
+      <TermsModal
+        isOpen={isTermsOpen}
+        onClose={() => setIsTermsOpen(false)}
+        defaultTab={termsTab}
+      />
+
+      <StrikeInfoModal
+        isOpen={isInfoOpen}
+        onClose={() => setIsInfoOpen(false)}
+      />
     </div>
   );
 }
+
+
+
+
