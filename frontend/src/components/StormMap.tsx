@@ -1,7 +1,7 @@
 import { MapContainer, TileLayer, Circle, Marker, Popup, useMap } from "react-leaflet";
 import { useEffect, useRef } from "react";
 import L from "leaflet";
-import type { MonitorSnapshot, Strike } from "../types.ts";
+import type { MonitorSnapshot, Strike, StrikeFilter } from "../types.ts";
 
 // Corrige o ícone padrão do Leaflet (quebra com bundlers se não apontarmos a URL).
 const markerIcon = new L.Icon({
@@ -13,18 +13,27 @@ const markerIcon = new L.Icon({
 });
 
 // Ícone de RELÂMPAGO para cada raio (marcação no mapa).
-// Vermelho = dentro do raio crítico; âmbar = fora. Ambos ficam 30 min no mapa.
+// Cor e escala ajustadas dinamicamente de acordo com a intensidade (kA) e distância.
 const BOLT_PATH = "M7 2v11h3v9l7-12h-4l4-8z";
-function boltIcon(color: string) {
+function boltIcon(near: boolean, ampKa: number) {
+  const amp = Math.abs(ampKa || 0);
+  let color = near ? "#ef4444" : "#f59e0b"; // Vermelho perto, Âmbar longe
+  if (amp >= 40) {
+    color = "#dc2626"; // Vermelho forte/púrpura para alta energia
+  } else if (amp >= 20) {
+    color = near ? "#ea580c" : "#d97706";
+  }
+
+  const scale = amp >= 40 ? 24 : amp >= 20 ? 20 : 16;
+  const anchor = Math.round(scale / 2);
+
   return L.divIcon({
     className: "bolt-marker",
-    html: `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="${BOLT_PATH}" fill="${color}" stroke="#111827" stroke-width="1.2" stroke-linejoin="round"/></svg>`,
-    iconSize: [20, 20],
-    iconAnchor: [10, 19],
+    html: `<svg viewBox="0 0 24 24" width="${scale}" height="${scale}" aria-hidden="true"><path d="${BOLT_PATH}" fill="${color}" stroke="#111827" stroke-width="1.2" stroke-linejoin="round"/></svg>`,
+    iconSize: [scale, scale],
+    iconAnchor: [anchor, scale - 1],
   });
 }
-const boltNear = boltIcon("#ef4444");
-const boltFar = boltIcon("#f59e0b");
 
 /** Glifo de relâmpago usado na legenda. */
 function BoltGlyph({ color }: { color: string }) {
@@ -37,13 +46,6 @@ function BoltGlyph({ color }: { color: string }) {
 
 /**
  * Camada de incidência (toda a América do Sul) em UM ÚNICO canvas.
- *
- * Em vez de centenas/milhares de marcadores SVG animados (que travam o mapa),
- * desenhamos todos os pontos num canvas com um loop requestAnimationFrame:
- *  - a projeção lat/lon -> pixel é cacheada e só refeita quando o mapa move;
- *  - pontos fora da tela são descartados;
- *  - o pisca-pisca é só uma variação de alpha por frame (barato).
- * Acessibilidade: com prefers-reduced-motion, desenha estático (sem flash).
  */
 function IncidenceFlashLayer({ points }: { points: [number, number][] }) {
   const map = useMap();
@@ -62,7 +64,7 @@ function IncidenceFlashLayer({ points }: { points: [number, number][] }) {
       position: "absolute",
       top: "0",
       left: "0",
-      zIndex: "450", // acima dos anéis (overlayPane 400), abaixo dos marcadores (600)
+      zIndex: "450",
       pointerEvents: "none",
     });
     container.appendChild(canvas);
@@ -144,7 +146,7 @@ function IncidenceFlashLayer({ points }: { points: [number, number][] }) {
       };
       map.on("move viewreset", markDirty);
       map.on("resize", onResize);
-      map.on("zoomstart", hide); // evita ver pontos desalinhados durante o zoom
+      map.on("zoomstart", hide);
       map.on("zoomend", show);
       const loop = (now: number) => {
         if (dirtyRef.current) project();
@@ -172,12 +174,6 @@ function IncidenceFlashLayer({ points }: { points: [number, number][] }) {
 
 /**
  * Varredura de RADAR/SONAR.
- *
- * Uma linha que parte do ponto monitorado (a geolocalização) e gira no sentido
- * HORÁRIO; a ponta chega ao maior anel (120 km). Atrás do feixe há uma cauda que
- * desvanece, dando o efeito clássico de radar. Desenhada num canvas próprio com
- * requestAnimationFrame (barato) e ancorada ao mapa (segue zoom/pan).
- * Acessibilidade: com prefers-reduced-motion, desenha uma linha estática (sem giro).
  */
 function RadarSweepLayer({
   center,
@@ -203,15 +199,15 @@ function RadarSweepLayer({
   }, [radiusKm]);
 
   useEffect(() => {
-    const MAX_KM = 120; // ponta da linha = maior anel de referência
-    const PERIOD_MS = 5200; // uma volta a cada ~5 s
+    const MAX_KM = 120;
+    const PERIOD_MS = 5200;
     const container = map.getContainer();
     const canvas = L.DomUtil.create("canvas", "radar-sweep") as HTMLCanvasElement;
     Object.assign(canvas.style, {
       position: "absolute",
       top: "0",
       left: "0",
-      zIndex: "445", // acima dos anéis (400), abaixo dos pontos/marcadores
+      zIndex: "445",
       pointerEvents: "none",
     });
     container.appendChild(canvas);
@@ -236,16 +232,13 @@ function RadarSweepLayer({
 
       const [lat, lon] = centerRef.current;
       const c = map.latLngToContainerPoint([lat, lon]);
-      // 120 km em pixels: projeta o ponto a 120 km ao norte e mede a distância.
       const north = map.latLngToContainerPoint([lat + MAX_KM / 111, lon]);
       const rPx = Math.hypot(north.x - c.x, north.y - c.y);
 
-      // Ângulo do feixe: 0 = norte; cresce no sentido HORÁRIO.
       const theta = reduceMotion ? -Math.PI / 4 : ((now % PERIOD_MS) / PERIOD_MS) * Math.PI * 2;
       const tx = (a: number) => c.x + rPx * Math.sin(a);
       const ty = (a: number) => c.y - rPx * Math.cos(a);
 
-      // Cauda: leque de linhas atrás do feixe, com alpha decrescente.
       if (!reduceMotion) {
         const N = 26;
         const SPREAD = Math.PI * 0.4;
@@ -260,7 +253,6 @@ function RadarSweepLayer({
         }
       }
 
-      // Feixe principal (forte no centro, some na ponta dos 120 km).
       const grad = ctx.createLinearGradient(c.x, c.y, tx(theta), ty(theta));
       grad.addColorStop(0, "rgba(37, 99, 235, 0.95)");
       grad.addColorStop(1, "rgba(37, 99, 235, 0.12)");
@@ -271,17 +263,13 @@ function RadarSweepLayer({
       ctx.lineTo(tx(theta), ty(theta));
       ctx.stroke();
 
-      // Origem (ponto monitorado / geolocalização).
       ctx.beginPath();
       ctx.arc(c.x, c.y, 3.5, 0, Math.PI * 2);
       ctx.fillStyle = "#2563eb";
       ctx.fill();
 
-      // "Ping" de radar: cada raio ACENDE quando o feixe passa por cima e some
-      // aos poucos (aquisição de alvo). A intensidade cai conforme o feixe se
-      // afasta do rumo (bearing) do raio, no sentido horário.
       if (!reduceMotion) {
-        const FADE = Math.PI * 0.5; // brilho por ~1/4 de volta após o feixe passar
+        const FADE = Math.PI * 0.5;
         const cosLat = Math.cos((lat * Math.PI) / 180);
         const radius = radiusRef.current;
         for (const s of strikesRef.current) {
@@ -348,15 +336,16 @@ function RadarSweepLayer({
 
 interface Props {
   snapshot: MonitorSnapshot | null;
+  filter?: StrikeFilter;
+  theme?: "dark" | "light";
 }
 
-export default function StormMap({ snapshot }: Props) {
+export default function StormMap({ snapshot, filter = "all", theme = "dark" }: Props) {
   const center: [number, number] = snapshot
     ? [snapshot.location.lat, snapshot.location.lon]
     : [-25.5306, -49.2939];
 
   const radiusKm = snapshot?.radiusKm ?? 8;
-  // Anéis de referência a cada 15 km, até 120 km (estilo "alvo" do WeatherBug).
   const RING_STEP_KM = 15;
   const RING_MAX_KM = 120;
   const rings = Array.from(
@@ -364,71 +353,85 @@ export default function StormMap({ snapshot }: Props) {
     (_, i) => (i + 1) * RING_STEP_KM
   );
 
+  const strikes = snapshot?.strikes ?? [];
+  const filteredStrikes = strikes.filter((s) => {
+    if (filter === "cg") return s.type === "CG";
+    if (filter === "high_intensity") return Math.abs(s.peakAmpKa || 0) >= 30;
+    return true;
+  });
+
+  const isLight = theme === "light";
+  const tileUrl = isLight
+    ? "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    : "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+
+  const tileAttribution = isLight
+    ? '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    : '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>';
+
+  const ringColor = isLight ? "#2563eb" : "#38bdf8";
+
   return (
     <div className="map-wrap">
       <MapContainer center={center} zoom={7} scrollWheelZoom>
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          key={theme}
+          attribution={tileAttribution}
+          url={tileUrl}
         />
 
-        {/* Incidência regional (toda a América do Sul): um único canvas animado
-            (leve), em vez de milhares de marcadores SVG que travavam o mapa. */}
+
         <IncidenceFlashLayer points={snapshot?.regionStrikes ?? []} />
 
-        {/* Varredura de radar/sonar: gira do ponto monitorado até 120 km e
-            acende cada raio quando o feixe passa por cima. */}
-        <RadarSweepLayer center={center} strikes={snapshot?.strikes ?? []} radiusKm={radiusKm} />
+        <RadarSweepLayer center={center} strikes={filteredStrikes} radiusKm={radiusKm} />
 
-        {/* Ponto monitorado */}
         <Marker position={center} icon={markerIcon}>
           <Popup>{snapshot?.location.label ?? "Local monitorado"}</Popup>
         </Marker>
 
-        {/* Anéis de referência a cada 15 km (azul mais visível, opacidade constante) */}
         {rings.map((km) => (
           <Circle
             key={`ref-${km}`}
             center={center}
             radius={km * 1000}
             pathOptions={{
-              color: "#2563eb",
+              color: ringColor,
               weight: 1,
-              opacity: 0.5,
+              opacity: isLight ? 0.45 : 0.35,
               fill: false,
             }}
           />
         ))}
-        {/* Raio crítico de alerta em destaque */}
+
         <Circle
           center={center}
           radius={radiusKm * 1000}
           pathOptions={{
-            color: "#1d4ed8",
-            weight: 2.5,
-            opacity: 0.95,
+            color: ringColor,
+            weight: 2,
+            opacity: 0.9,
             fill: true,
-            fillColor: "#2563eb",
-            fillOpacity: 0.06,
+            fillColor: isLight ? "#2563eb" : "#0ea5e9",
+            fillOpacity: isLight ? 0.08 : 0.12,
           }}
         />
 
-        {/* Raios: cada descarga marcada com ícone de relâmpago. Permanece no
-            mapa por 30 min (janela servida pelo backend). Vermelho = dentro do
-            raio crítico; âmbar = fora. */}
-        {snapshot?.strikes.map((s) => {
+
+        {filteredStrikes.map((s) => {
           const near = s.distanceKm <= radiusKm;
           const when = new Date(s.timestamp).toLocaleTimeString("pt-BR", {
             hour: "2-digit",
             minute: "2-digit",
           });
+          const amp = Math.abs(s.peakAmpKa || 0);
+
           return (
-            <Marker key={s.id} position={[s.lat, s.lon]} icon={near ? boltNear : boltFar}>
+            <Marker key={s.id} position={[s.lat, s.lon]} icon={boltIcon(near, amp)}>
               <Popup>
                 <strong>{s.distanceKm} km</strong> · {when}
                 <br />
-                {s.type === "CG" ? "nuvem-solo" : "intra-nuvem"}
-                {s.peakAmpKa ? <> · {Math.abs(s.peakAmpKa)} kA</> : null}
+                Tipo: {s.type === "CG" ? "⚡ nuvem-solo (CG)" : "☁️ intra-nuvem (IC)"}
+                {amp > 0 ? <> <br />Intensidade: <strong>{amp} kA</strong></> : null}
               </Popup>
             </Marker>
           );
@@ -442,7 +445,7 @@ export default function StormMap({ snapshot }: Props) {
         <div className="legend-row">
           <span
             className="legend-ring"
-            style={{ borderColor: "#1d4ed8", borderWidth: 2 }}
+            style={{ borderColor: "#38bdf8", borderWidth: 2 }}
           />
           Raio crítico de alerta ({radiusKm} km)
         </div>
@@ -452,7 +455,7 @@ export default function StormMap({ snapshot }: Props) {
               display: "inline-block",
               width: 12,
               height: 2,
-              background: "#2563eb",
+              background: "#38bdf8",
               flex: "none",
             }}
           />
@@ -460,23 +463,24 @@ export default function StormMap({ snapshot }: Props) {
         </div>
         <div className="legend-row">
           <BoltGlyph color="#ef4444" />
-          Raio dentro do limite crítico
+          Raio crítico (próximo do local)
         </div>
         <div className="legend-row">
           <BoltGlyph color="#f59e0b" />
-          Raio fora do limite crítico
+          Raio externo (&gt; {radiusKm} km)
         </div>
         <div className="legend-row">
           <span
             className="legend-ring"
             style={{ background: "#f5009e", borderColor: "#111827" }}
           />
-          Raios em toda a América do Sul (ao vivo)
+          Raios América do Sul (satélite ao vivo)
         </div>
         <div className="legend-row" style={{ color: "var(--ink-mute)", fontSize: 11 }}>
-          ⚡ = perto do local (últimos 30 min). Pontos = tudo ao vivo.
+          Tamanho do ⚡ indica a intensidade em kA.
         </div>
       </div>
     </div>
   );
 }
+

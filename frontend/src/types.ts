@@ -69,3 +69,6 @@ export interface Forecast {
   };
   hourly: HourlyPoint[];
 }
+
+export type StrikeFilter = "all" | "cg" | "high_intensity";
+
