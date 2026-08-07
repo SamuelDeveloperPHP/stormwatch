@@ -68,55 +68,43 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
     return "☁️";
   };
 
-  // Configurações por aba (Cores, Títulos dos Eixos X/Y e Point Styling oficiais Chart.js)
+  // Cor sóbria e coesa por métrica (paleta BI validada — temp/chuva/vento/umidade).
   const getTabConfig = () => {
     switch (tab) {
       case "temp":
         return {
-          title: "Temperatura (°C)",
-          yAxisTitle: "Temperatura (°C)",
+          title: "Temperatura",
           unit: "°C",
-          unitTick: "°C",
-          borderColor: "#dc2626",
-          pointBgColor: "rgba(220, 38, 38, 0.4)",
-          pointBorderColor: "#dc2626",
-          fillBgColor: "rgba(220, 38, 38, 0.08)",
+          unitTick: "°",
+          borderColor: "#d95926",
+          fillBgColor: "rgba(217, 89, 38, 0.08)",
           data: points.map((p) => p.tempC),
         };
       case "rain":
         return {
-          title: "Chuva (mm)",
-          yAxisTitle: "Volume de Precipitação (mm)",
+          title: "Chuva",
           unit: " mm",
-          unitTick: " mm",
-          borderColor: "#0284c7",
-          pointBgColor: "rgba(2, 132, 199, 0.4)",
-          pointBorderColor: "#0284c7",
-          fillBgColor: "rgba(2, 132, 199, 0.08)",
+          unitTick: "",
+          borderColor: "#3987e5",
+          fillBgColor: "rgba(57, 135, 229, 0.08)",
           data: points.map((p) => p.precipMm ?? 0),
         };
       case "wind":
         return {
-          title: "Vento (km/h)",
-          yAxisTitle: "Velocidade do Vento (km/h)",
+          title: "Vento",
           unit: " km/h",
-          unitTick: " km/h",
-          borderColor: "#65a30d",
-          pointBgColor: "rgba(101, 163, 13, 0.4)",
-          pointBorderColor: "#65a30d",
-          fillBgColor: "rgba(101, 163, 13, 0.08)",
+          unitTick: "",
+          borderColor: "#199e70",
+          fillBgColor: "rgba(25, 158, 112, 0.08)",
           data: points.map((p) => p.windKmh ?? 0),
         };
       case "humidity":
         return {
-          title: "Umidade (%)",
-          yAxisTitle: "Umidade Relativa do Ar (%)",
+          title: "Umidade",
           unit: "%",
           unitTick: "%",
-          borderColor: "#0369a1",
-          pointBgColor: "rgba(3, 105, 161, 0.4)",
-          pointBorderColor: "#0369a1",
-          fillBgColor: "rgba(3, 105, 161, 0.08)",
+          borderColor: "#9085e9",
+          fillBgColor: "rgba(144, 133, 233, 0.1)",
           data: points.map((p) => p.humidity ?? 0),
         };
     }
@@ -124,7 +112,7 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
 
   const cfg = getTabConfig();
 
-  // Dados do Chart.js com Point Styling oficial
+  // Linha fina e limpa; ponto aparece só no hover (estilo dashboard/BI).
   const chartData = {
     labels,
     datasets: [
@@ -132,49 +120,40 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
         label: cfg.title,
         data: cfg.data,
         borderColor: cfg.borderColor,
-        borderWidth: 3,
-        tension: 0.35,
+        borderWidth: 2,
+        tension: 0.3,
         fill: true,
         backgroundColor: cfg.fillBgColor,
         pointStyle: "circle",
-        pointRadius: 9,
-        pointHoverRadius: 15,
-        pointBackgroundColor: cfg.pointBgColor,
-        pointBorderColor: cfg.pointBorderColor,
-        pointBorderWidth: 2.5,
+        pointRadius: 3,
+        pointHoverRadius: 6,
+        pointBackgroundColor: cfg.borderColor,
+        pointBorderColor: "#ffffff",
+        pointBorderWidth: 1.5,
+        pointHitRadius: 14,
       },
     ],
   };
 
-  // Opções do Chart.js com DataLabels e Títulos dos Eixos X e Y
+  // Config enxuta estilo dashboard/BI: sem legenda (série única), sem rótulo em
+  // cada ponto, sem títulos de eixo redundantes; grid discreto e eixos neutros.
+  const AXIS = "#94a3b8";
+  const GRID = "rgba(148, 163, 184, 0.16)";
+  const FONT = "Inter, system-ui, sans-serif";
   const chartOptions: ChartOptions<"line"> = {
     responsive: true,
     maintainAspectRatio: false,
-    layout: {
-      padding: {
-        top: 26,
-        bottom: 8,
-        left: 6,
-        right: 12,
-      },
-    },
+    layout: { padding: { top: 24, bottom: 2, left: 2, right: 10 } },
+    interaction: { mode: "index", intersect: false },
     plugins: {
-      legend: {
-        display: true,
-        position: "top" as const,
-        labels: {
-          usePointStyle: true,
-          boxWidth: 10,
-          font: { family: "Inter, system-ui, sans-serif", size: 12, weight: 600 },
-        },
-      },
+      legend: { display: false },
       datalabels: {
         display: true,
         align: "top" as const,
         anchor: "end" as const,
-        offset: 5,
+        offset: 4,
         color: cfg.borderColor,
-        font: { family: "Inter, system-ui, sans-serif", weight: "bold", size: 12 },
+        font: { family: FONT, weight: "bold", size: 11 },
         formatter: (value, context) => {
           const idx = context.dataIndex;
           const p = points[idx];
@@ -186,12 +165,18 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
         },
       },
       tooltip: {
+        backgroundColor: "rgba(15, 23, 42, 0.94)",
+        padding: 10,
+        cornerRadius: 8,
+        displayColors: false,
+        titleFont: { family: FONT, size: 12, weight: "bold" },
+        bodyFont: { family: FONT, size: 12 },
         callbacks: {
           label: (context) => {
             const idx = context.dataIndex;
             const p = points[idx];
             let extra = "";
-            if (tab === "rain") extra = ` (Prob. ${p.precipProb}%)`;
+            if (tab === "rain") extra = ` · prob. ${p.precipProb}%`;
             return `${cfg.title}: ${context.raw}${cfg.unit}${extra}`;
           },
         },
@@ -199,27 +184,23 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
     },
     scales: {
       x: {
-        title: {
-          display: true,
-          text: "Horário da Previsão",
-          color: "rgba(100, 116, 139, 0.9)",
-          font: { family: "Inter, system-ui, sans-serif", size: 12, weight: 700 },
-          padding: { top: 6 },
+        grid: { display: false },
+        border: { color: GRID },
+        ticks: {
+          color: AXIS,
+          font: { family: FONT, size: 11 },
+          maxRotation: 0,
+          autoSkipPadding: 14,
         },
-        grid: { color: "rgba(150, 150, 150, 0.1)" },
-        ticks: { font: { family: "Inter, system-ui, sans-serif", size: 11, weight: "bold" } },
       },
       y: {
-        title: {
-          display: true,
-          text: cfg.yAxisTitle,
-          color: cfg.borderColor,
-          font: { family: "Inter, system-ui, sans-serif", size: 12, weight: 700 },
-          padding: { bottom: 6 },
-        },
-        grid: { color: "rgba(150, 150, 150, 0.1)" },
+        grid: { color: GRID, drawTicks: false },
+        border: { display: false },
         ticks: {
-          font: { family: "Inter, system-ui, sans-serif", size: 11 },
+          color: AXIS,
+          font: { family: FONT, size: 11 },
+          padding: 8,
+          maxTicksLimit: 6,
           callback: (val) => `${val}${cfg.unitTick}`,
         },
       },
@@ -236,13 +217,13 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
             className={`view-btn ${viewMode === "graph" ? "active" : ""}`}
             onClick={() => setViewMode("graph")}
           >
-            📈 Gráfico
+            Gráfico
           </button>
           <button
             className={`view-btn ${viewMode === "table" ? "active" : ""}`}
             onClick={() => setViewMode("table")}
           >
-            📑 Tabela
+            Tabela
           </button>
         </div>
       </div>
@@ -253,25 +234,29 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
           className={`hourly-tab-btn ${tab === "temp" ? "tab-temp-active" : ""}`}
           onClick={() => setTab("temp")}
         >
-          🌡️ Temperatura
+          <span className="tab-dot" style={{ background: "#d95926" }} />
+          Temperatura
         </button>
         <button
           className={`hourly-tab-btn ${tab === "rain" ? "tab-rain-active" : ""}`}
           onClick={() => setTab("rain")}
         >
-          🌧️ Chuva (mm & %)
+          <span className="tab-dot" style={{ background: "#3987e5" }} />
+          Chuva
         </button>
         <button
           className={`hourly-tab-btn ${tab === "wind" ? "tab-wind-active" : ""}`}
           onClick={() => setTab("wind")}
         >
-          💨 Vento (km/h & Direção)
+          <span className="tab-dot" style={{ background: "#199e70" }} />
+          Vento
         </button>
         <button
           className={`hourly-tab-btn ${tab === "humidity" ? "tab-hum-active" : ""}`}
           onClick={() => setTab("humidity")}
         >
-          💧 Umidade (%)
+          <span className="tab-dot" style={{ background: "#9085e9" }} />
+          Umidade
         </button>
       </div>
 
