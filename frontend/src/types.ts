@@ -50,6 +50,7 @@ export interface HourlyPoint {
   time: string;
   hourLabel: string;
   tempC: number;
+  feelsLikeC?: number;
   precipProb: number;
   precipMm?: number;
   windKmh?: number;
