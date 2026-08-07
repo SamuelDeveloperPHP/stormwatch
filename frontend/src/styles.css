@@ -1095,12 +1095,63 @@ h1, h2, h3, h4 {
   position: relative;
 }
 
+.landing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 40px;
+  background: var(--bg-elev);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.landing-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.landing-nav-links a {
+  color: var(--ink-soft);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.landing-nav-links a:hover {
+  color: var(--accent);
+}
+
+.btn-primary-glow {
+  background: var(--accent);
+  color: #ffffff;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 0 16px var(--accent-glow);
+  transition: all 0.2s;
+}
+
+.btn-primary-glow:hover {
+  background: var(--accent-bright);
+  transform: translateY(-1px);
+}
+
 /* Card Climatológico na Margem Esquerda da Página (Fora da Hero Centralizada) */
 .landing-left-weather-card {
   position: absolute;
   top: 90px;
   left: 32px;
   width: 320px;
+
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 18px;
