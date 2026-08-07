@@ -1083,9 +1083,7 @@ h1, h2, h3, h4 {
 .dist-badge--safe {
   background: var(--accent);
   color: #ffffff;
-}
-
-/* Landing Page Estilos Comerciais B2B */
+}/* Landing Page Container */
 .landing-container {
   height: 100vh;
   min-height: 100vh;
@@ -1094,92 +1092,31 @@ h1, h2, h3, h4 {
   overflow-y: auto;
   scroll-behavior: smooth;
   -webkit-overflow-scrolling: touch;
+  position: relative;
 }
 
-
-.landing-nav {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 40px;
-  background: var(--bg-elev);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--line);
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
-
-.landing-nav-links {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-}
-
-.landing-nav-links a {
-  color: var(--ink-soft);
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
-  transition: color 0.2s;
-}
-
-.landing-nav-links a:hover {
-  color: var(--accent);
-}
-
-.btn-primary-glow {
-  background: var(--accent);
-  color: #ffffff;
-  border: none;
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 700;
-  padding: 8px 18px;
-  border-radius: 999px;
-  cursor: pointer;
-  box-shadow: 0 0 16px var(--accent-glow);
-  transition: all 0.2s;
-}
-
-.btn-primary-glow:hover {
-  background: var(--accent-bright);
-  transform: translateY(-1px);
-}
-
-/* Hero Section */
-.hero-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 60px 20px 40px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.hero-grid {
-  display: grid;
-  grid-template-columns: 420px 1fr;
-  gap: 36px;
-  align-items: center;
-  width: 100%;
-  margin-bottom: 48px;
-}
-
-/* Card de Geolocalização e Clima Tempo Agora */
-.hero-weather-card {
+/* Card Climatológico na Margem Esquerda da Página (Fora da Hero Centralizada) */
+.landing-left-weather-card {
+  position: absolute;
+  top: 90px;
+  left: 32px;
+  width: 320px;
   background: var(--panel);
   border: 1px solid var(--line);
-  border-radius: 20px;
-  padding: 24px;
+  border-radius: 18px;
+  padding: 20px;
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
   text-align: left;
-  position: relative;
-  overflow: hidden;
+  z-index: 10;
   backdrop-filter: blur(12px);
+  transition: transform 0.2s;
+}
+
+.landing-left-weather-card:hover {
+  border-color: var(--line-bright);
 }
 
 .hero-weather-header {
@@ -1187,7 +1124,7 @@ h1, h2, h3, h4 {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding-bottom: 12px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--line);
 }
 
@@ -1195,12 +1132,12 @@ h1, h2, h3, h4 {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-size: 13px;
+  font-size: 12px;
   color: var(--ink);
 }
 
 .hero-weather-subloc {
-  font-size: 11px;
+  font-size: 10px;
   color: var(--ink-soft);
   margin-top: 2px;
 }
@@ -1211,7 +1148,7 @@ h1, h2, h3, h4 {
   background: var(--accent-glow);
   color: var(--accent);
   border: 1px solid var(--line-bright);
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 6px;
   white-space: nowrap;
   letter-spacing: 0.05em;
@@ -1220,12 +1157,12 @@ h1, h2, h3, h4 {
 .hero-weather-main {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 16px;
 }
 
 .hero-weather-temp {
   font-family: var(--font-display);
-  font-size: 52px;
+  font-size: 46px;
   font-weight: 800;
   line-height: 1;
   color: var(--ink);
@@ -1235,58 +1172,58 @@ h1, h2, h3, h4 {
 .hero-weather-meta {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
+  gap: 3px;
+  font-size: 11px;
   color: var(--ink-soft);
 }
 
 .hero-weather-cond {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--ink);
 }
 
 .hero-weather-hourly-title {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--ink-mute);
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .hero-weather-hourly {
   display: flex;
-  gap: 10px;
+  gap: 8px;
   overflow-x: auto;
-  padding-bottom: 6px;
+  padding-bottom: 4px;
 }
 
 .hero-hour-item {
   background: var(--chip);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 8px 10px;
+  border-radius: 8px;
+  padding: 6px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  min-width: 52px;
+  gap: 3px;
+  min-width: 48px;
 }
 
 .hero-hour-time {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--ink-mute);
 }
 
 .hero-hour-temp {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: var(--ink);
 }
 
 .hero-hour-precip {
-  font-size: 11px;
+  font-size: 10px;
   color: #0284c7;
   font-weight: 700;
   white-space: nowrap;
@@ -1296,13 +1233,15 @@ h1, h2, h3, h4 {
   color: #38bdf8;
 }
 
-
-/* Coluna Direita da Hero */
-.hero-content-col {
+/* Hero Section Centralizada */
+.hero-section {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  text-align: left;
+  align-items: center;
+  text-align: center;
+  padding: 70px 20px 50px;
+  max-width: 860px;
+  margin: 0 auto;
 }
 
 .hero-badge {
@@ -1317,7 +1256,7 @@ h1, h2, h3, h4 {
   color: var(--accent);
   border: 1px solid var(--line-bright);
   letter-spacing: 0.05em;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
 .hero-pulse {
@@ -1330,11 +1269,11 @@ h1, h2, h3, h4 {
 }
 
 .hero-title {
-  font-size: 42px;
+  font-size: 46px;
   font-weight: 800;
   line-height: 1.15;
   letter-spacing: -0.03em;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .text-gradient {
@@ -1344,17 +1283,19 @@ h1, h2, h3, h4 {
 }
 
 .hero-subtitle {
-  font-size: 16px;
+  font-size: 17px;
   color: var(--ink-soft);
-  max-width: 650px;
+  max-width: 720px;
   line-height: 1.6;
-  margin-bottom: 28px;
+  margin-bottom: 32px;
 }
 
 .hero-cta-group {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 50px;
 }
 
 .btn-hero-primary {
@@ -1362,9 +1303,9 @@ h1, h2, h3, h4 {
   color: #ffffff;
   border: none;
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  padding: 13px 26px;
+  padding: 14px 28px;
   border-radius: 12px;
   cursor: pointer;
   box-shadow: 0 10px 25px -5px var(--accent-glow);
@@ -1381,9 +1322,9 @@ h1, h2, h3, h4 {
   color: var(--ink);
   border: 1px solid var(--line);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  padding: 13px 26px;
+  padding: 14px 28px;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s;
@@ -1394,38 +1335,16 @@ h1, h2, h3, h4 {
   border-color: var(--accent);
 }
 
-/* Espaçamento e Animação Suave para a Seção de Casos de Uso (Scroll Reveal) */
-#use-cases {
-  margin-top: 80px;
-  padding-top: 80px;
-  scroll-margin-top: 80px;
-  animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0.3;
-    transform: translateY(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+/* Responsividade: Ajusta em Telas Menores */
+@media (max-width: 1440px) {
+  .landing-left-weather-card {
+    position: static;
+    width: 100%;
+    max-width: 860px;
+    margin: 20px auto 0;
   }
 }
 
-/* Responsividade da Hero Grid */
-@media (max-width: 1024px) {
-  .hero-grid {
-    grid-template-columns: 1fr;
-  }
-  .hero-content-col {
-    align-items: center;
-    text-align: center;
-  }
-  .hero-cta-group {
-    justify-content: center;
-  }
-}
 
 
 /* Stats Bar */
