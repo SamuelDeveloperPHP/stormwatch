@@ -6,6 +6,8 @@ import { ForecastPanel, IntensitySummaryPanel, StatusPanel, StrikeList } from ".
 import TermsModal from "./components/TermsModal.tsx";
 import StrikeInfoModal from "./components/StrikeInfoModal.tsx";
 
+import LandingPage from "./components/LandingPage.tsx";
+
 const POLL_MS = 30000; // a cada 30s (casa com o polling da NOAA no ingestor)
 
 type GeoState = "pending" | "ok" | "denied" | "unsupported";
@@ -28,6 +30,9 @@ export default function App() {
   // Ref para que o intervalo de polling sempre use as coordenadas mais recentes
   // sem precisar reiniciar o setInterval quando a localização chega.
   const coordsRef = useRef<Coords | undefined>(undefined);
+
+  // Estado para alternar entre Landing Page Comercial e o Monitor ao Vivo
+  const [viewMode, setViewMode] = useState<"landing" | "monitor">("landing");
 
   // Estado para o tema Dark / Light
   const [theme, setTheme] = useState<"dark" | "light">(() => {
@@ -134,10 +139,26 @@ export default function App() {
 
   const geoNote = GEO_NOTE[geo];
 
+  if (viewMode === "landing") {
+    return (
+      <>
+        <LandingPage
+          onOpenApp={() => setViewMode("monitor")}
+          onOpenTerms={openTerms}
+        />
+        <TermsModal
+          isOpen={isTermsOpen}
+          onClose={() => setIsTermsOpen(false)}
+          defaultTab={termsTab}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand">
+        <div className="brand" onClick={() => setViewMode("landing")} style={{ cursor: "pointer" }}>
           <span className="brand-dot" />
           StormWatch
           <span className="brand-badge">LIVE GOES-19</span>
@@ -155,6 +176,13 @@ export default function App() {
         </div>
 
         <div className="topbar-actions">
+          <button
+            className="theme-toggle-btn"
+            onClick={() => setViewMode("landing")}
+            title="Voltar para a página inicial"
+          >
+            🏠 Início / Planos
+          </button>
           <button
             className="theme-toggle-btn"
             onClick={toggleTheme}
@@ -237,6 +265,7 @@ export default function App() {
     </div>
   );
 }
+
 
 
 
