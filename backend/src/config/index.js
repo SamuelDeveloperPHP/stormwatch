@@ -36,7 +36,8 @@ export const config = Object.freeze({
   inboundWebhookSecret: process.env.INBOUND_WEBHOOK_SECRET ?? "",
 
   // Fonte de raios
-  lightningProvider: process.env.LIGHTNING_PROVIDER ?? "mock",
+  lightningProvider: process.env.LIGHTNING_PROVIDER ?? "goesglm",
+
   // Fonte de previsão do tempo: "openmeteo" (real, gratuita, sem chave) | "mock"
   forecastProvider: process.env.FORECAST_PROVIDER ?? "openmeteo",
   // URL assinada do Spark (WeatherBug) capturada do navegador — APENAS p/ teste.
