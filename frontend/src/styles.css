@@ -1247,6 +1247,85 @@ h1, h2, h3, h4 {
   color: var(--accent);
 }
 
+/* Faixa Horizontal de Informações do Gráfico (Alinhada às horas) */
+.hourly-chart-info-ribbon {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 12px 10px;
+  margin-top: 10px;
+  background: var(--chip);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  scrollbar-width: thin;
+}
+
+.info-col-item {
+  flex: 1 1 0px;
+  min-width: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 3px;
+  padding: 4px;
+}
+
+.col-hour {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.col-icon {
+  font-size: 18px;
+  margin: 1px 0;
+}
+
+.col-temp {
+  font-size: 13px;
+  font-weight: 800;
+  color: #dc2626;
+}
+
+[data-theme="dark"] .col-temp {
+  color: #f87171;
+}
+
+.col-rain {
+  font-size: 10px;
+  font-weight: 700;
+  color: #0284c7;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .col-rain {
+  color: #38bdf8;
+}
+
+.col-wind {
+  font-size: 10px;
+  font-weight: 700;
+  color: #65a30d;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .col-wind {
+  color: #a3e635;
+}
+
+.col-hum {
+  font-size: 10px;
+  font-weight: 700;
+  color: #0369a1;
+  white-space: nowrap;
+}
+
+[data-theme="dark"] .col-hum {
+  color: #7dd3fc;
+}
+
 /* Hero Section Centralizada (Padding reduzido para subir os cards) */
 .hero-section {
   display: flex;
