@@ -1,4 +1,3 @@
-import React from "react";
 import holofotesImg from "../../assets/image/holofotes.png";
 
 // 🏗️ Ícone de Construção Civil & Gruas (Grua de Torre com Carga)
