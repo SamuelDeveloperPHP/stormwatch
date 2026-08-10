@@ -32,6 +32,8 @@ export default function LandingPage({
   snapshot,
   forecast,
 }: LandingPageProps) {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   const scrollToPricing = () => {
     const el = document.getElementById("pricing-section");
     if (el) el.scrollIntoView({ behavior: "smooth" });
@@ -43,21 +45,34 @@ export default function LandingPage({
     <div className="landing-container">
       {/* Top Navbar */}
       <nav className="landing-nav">
-        <div className="brand">
-          <span className="brand-dot" />
-          StormWatch <span className="brand-badge">B2B & Live</span>
-        </div>
+        <div className="landing-nav-header">
+          <div className="brand">
+            <span className="brand-dot" />
+            StormWatch <span className="brand-badge">B2B & Live</span>
+          </div>
 
-        <div className="landing-nav-links">
-          <a href="#weather-section">Previsão Tempo</a>
-          <a href="#use-cases">Casos de Uso</a>
-          <a href="#pricing-section">Planos & Preços</a>
-          <button className="terms-trigger-btn" onClick={() => onOpenTerms("terms")}>
-            Termos
+          <button
+            className="mobile-menu-toggle"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Alternar Menu"
+          >
+            {isMobileMenuOpen ? "✕" : "☰"}
           </button>
         </div>
 
-        <button className="btn-primary-glow" onClick={onOpenApp}>
+        <div className={`landing-nav-links ${isMobileMenuOpen ? "mobile-open" : ""}`}>
+          <a href="#weather-section" onClick={() => setIsMobileMenuOpen(false)}>Previsão Tempo</a>
+          <a href="#use-cases" onClick={() => setIsMobileMenuOpen(false)}>Casos de Uso</a>
+          <a href="#pricing-section" onClick={() => setIsMobileMenuOpen(false)}>Planos & Preços</a>
+          <button className="terms-trigger-btn" onClick={() => { setIsMobileMenuOpen(false); onOpenTerms("terms"); }}>
+            Termos
+          </button>
+          <button className="btn-primary-glow mobile-nav-cta" onClick={() => { setIsMobileMenuOpen(false); onOpenApp(); }}>
+            <BoltIcon size={14} style={{ marginRight: 6 }} />Abrir Monitor Ao Vivo
+          </button>
+        </div>
+
+        <button className="btn-primary-glow desktop-nav-cta" onClick={onOpenApp}>
           <BoltIcon size={14} style={{ marginRight: 6 }} />Abrir Monitor Ao Vivo
         </button>
       </nav>

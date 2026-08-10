@@ -4,6 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="StormWatch — monitor de raios e previsão do tempo com alertas." />
+    <script>
+      // Aplica o tema salvo (padrão: claro) antes da 1ª pintura — evita flash de tema.
+      document.documentElement.setAttribute(
+        "data-theme",
+        localStorage.getItem("stormwatch_theme") || "light"
+      );
+    </script>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>" />
     <title>StormWatch — Monitor de Raios</title>
     <link
