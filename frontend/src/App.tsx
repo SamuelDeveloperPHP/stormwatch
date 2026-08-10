@@ -138,6 +138,8 @@ export default function App() {
     return () => ctrl.abort();
   }, [lat, lon]);
 
+  const geoNote = GEO_NOTE[geo];
+
   // Estado para alternar entre Mapa e Painéis no celular (mobile)
   const [mobileTab, setMobileTab] = useState<"map" | "panels">("map");
 

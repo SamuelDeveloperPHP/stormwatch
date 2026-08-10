@@ -161,7 +161,7 @@ export default function LandingPage({
                   {current?.condition === "thunderstorm" ? (
                     <><StopIcon size={14} style={{ marginRight: 6 }} />Alerta NR-18: Risco de Raios / Paralisação</>
                   ) : current?.condition === "rain" ? (
-                    <><WarnIcon size={14} style={{ marginRight: 6 }} />Atenção: Janela de Chuva no Campo</>
+                    <><WarnIcon size={14} style={{ marginRight: 6 }} />Atenção: Janela de Chuva</>
                   ) : (
                     <><ShieldCheckIcon size={14} style={{ marginRight: 6 }} />Janela Operacional Segura</>
                   )}
