@@ -1,4 +1,105 @@
+import type { CSSProperties, ReactNode } from "react";
 import type { Forecast, MonitorSnapshot, StrikeFilter } from "../types.ts";
+
+// ── Ícones vetoriais minimalistas (estilo dashboard/BI) ────────────────────
+// Traço fino, monocromático. Herdam `currentColor` (ex.: a cor de status do CSS).
+type IcoProps = { size?: number; style?: CSSProperties };
+
+function Svg({ size = 15, style, children }: { size?: number; style?: CSSProperties; children: ReactNode }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      aria-hidden="true"
+      style={{ verticalAlign: "-2px", ...style }}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {children}
+    </svg>
+  );
+}
+
+// Status indisponível / atenção — triângulo de alerta.
+function WarnIcon({ size = 16, style }: IcoProps) {
+  return (
+    <Svg size={size} style={style}>
+      <path d="M10.3 4.2 2 18.5a2 2 0 0 0 1.7 3h16.6a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0z" />
+      <path d="M12 9.7v4.1" />
+      <path d="M12 17.4h.01" />
+    </Svg>
+  );
+}
+
+// Status de perigo (parar atividades) — octógono de parada.
+function StopIcon({ size = 16, style }: IcoProps) {
+  return (
+    <Svg size={size} style={style}>
+      <path d="M7.86 2h8.28L22 7.86v8.28L16.14 22H7.86L2 16.14V7.86z" />
+      <path d="M12 8v4.5" />
+      <path d="M12 16h.01" />
+    </Svg>
+  );
+}
+
+// Status seguro — escudo com marca de verificação.
+function ShieldCheckIcon({ size = 16, style }: IcoProps) {
+  return (
+    <Svg size={size} style={style}>
+      <path d="M12 3l7 2.7v5.1c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V5.7z" />
+      <path d="M9 12l2 2 4-4.2" />
+    </Svg>
+  );
+}
+
+// Botão de informação/guia — círculo com "i".
+function InfoIcon({ size = 15, style }: IcoProps) {
+  return (
+    <Svg size={size} style={style}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5" />
+      <path d="M12 7.6h.01" />
+    </Svg>
+  );
+}
+
+// Raio nuvem-solo (CG — risco direto): relâmpago preenchido (símbolo-marca).
+function BoltIcon({ size = 13, style }: IcoProps) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      aria-hidden="true"
+      style={{ verticalAlign: "-2px", ...style }}
+      fill="currentColor"
+    >
+      <path d="M13 2 3 14h7l-1 8 10-12h-7z" />
+    </svg>
+  );
+}
+
+// Raio intra-nuvem (IC): nuvem (sem descarga ao solo).
+function CloudIcon({ size = 13, style }: IcoProps) {
+  return (
+    <Svg size={size} style={style}>
+      <path d="M6.5 16.5h10a3.5 3.5 0 0 0 .3-7A4.8 4.8 0 0 0 7.7 8 3.7 3.7 0 0 0 6.5 16.5z" />
+    </Svg>
+  );
+}
+
+// Probabilidade de chuva — gota.
+function RainDropIcon({ size = 12, style }: IcoProps) {
+  return (
+    <Svg size={size} style={style}>
+      <path d="M12 3.8c3.1 3.7 4.8 6.2 4.8 8.7a4.8 4.8 0 0 1-9.6 0c0-2.5 1.7-5 4.8-8.7z" />
+    </Svg>
+  );
+}
 
 function fmtCountdown(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -30,7 +131,10 @@ export function StatusPanel({
   if (unavailable) {
     return (
       <div className="status status--degraded">
-        <div className="status-label">⚠️ Monitoramento indisponível</div>
+        <div className="status-label">
+          <WarnIcon size={17} style={{ marginRight: 7, verticalAlign: "-3px" }} />
+          Monitoramento indisponível
+        </div>
         <div className="status-sub">
           Sem dados de raios atualizados. Trate a área como <strong>insegura</strong> e
           use o protocolo manual (trovão / observação visual).
@@ -47,7 +151,10 @@ export function StatusPanel({
   if (safety.level === "danger") {
     return (
       <div className="status status--danger">
-        <div className="status-label">⛔ PARAR ATIVIDADES</div>
+        <div className="status-label">
+          <StopIcon size={17} style={{ marginRight: 7, verticalAlign: "-3px" }} />
+          PARAR ATIVIDADES
+        </div>
         <div className="status-sub">
           Raio a <strong>{safety.closestKm} km</strong> · {safety.inZoneCount} na zona de
           risco ({safety.triggerKm} km).
@@ -65,7 +172,10 @@ export function StatusPanel({
   // safe
   return (
     <div className="status status--safe">
-      <div className="status-label">Área segura</div>
+      <div className="status-label">
+        <ShieldCheckIcon size={17} style={{ marginRight: 7, verticalAlign: "-3px" }} />
+        Área segura
+      </div>
       <div className="status-sub">
         Nenhum raio dentro de {safety.triggerKm} km da sua localização.
       </div>
@@ -124,8 +234,13 @@ export function IntensitySummaryPanel({
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <h3>Análise da Tempestade</h3>
           {onOpenInfo && (
-            <button className="info-guide-btn" onClick={onOpenInfo} title="Entenda como funcionam as métricas">
-              ℹ️
+            <button
+              className="info-guide-btn"
+              onClick={onOpenInfo}
+              title="Entenda como funcionam as métricas"
+              aria-label="Entenda como funcionam as métricas"
+            >
+              <InfoIcon size={16} />
             </button>
           )}
         </div>
@@ -199,7 +314,7 @@ export function ForecastPanel({ forecast, place }: { forecast: Forecast | null; 
             <span className="hour-time">{h.hourLabel}</span>
             <span className="hour-temp">{h.tempC}°</span>
             <span className="hour-precip" style={{ fontSize: 10, color: "#0284c7", fontWeight: 700 }}>
-              🌧️ {h.precipProb}%
+              <RainDropIcon size={11} style={{ marginRight: 3 }} />{h.precipProb}%
             </span>
           </div>
         ))}
@@ -235,7 +350,7 @@ export function StrikeList({
           <h3>Raios recentes</h3>
           {onOpenInfo && (
             <button className="info-guide-btn" onClick={onOpenInfo} title="Como ler a lista e intensidade dos raios">
-              ℹ️ Guia
+              <InfoIcon size={14} style={{ marginRight: 4 }} />Guia
             </button>
           )}
         </div>
@@ -288,7 +403,11 @@ export function StrikeList({
               >
                 <span className="strike-dist">{s.distanceKm} km</span>
                 <span className="strike-type">
-                  {s.type === "CG" ? "⚡ nuvem-solo" : "☁️ intra-nuvem"} · {when}
+                  {s.type === "CG" ? (
+                    <><BoltIcon size={13} style={{ marginRight: 3 }} />nuvem-solo</>
+                  ) : (
+                    <><CloudIcon size={13} style={{ marginRight: 3 }} />intra-nuvem</>
+                  )} · {when}
                 </span>
                 {amp > 0 && (
                   <span className={`amp-badge ${ampClass}`}>{amp} kA</span>
