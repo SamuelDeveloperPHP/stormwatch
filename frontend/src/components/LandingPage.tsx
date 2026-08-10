@@ -1,6 +1,21 @@
 import type { Forecast, MonitorSnapshot } from "../types.ts";
 import HourlyForecastWidget from "./HourlyForecastWidget.tsx";
 import { CraneIcon, StageEventsIcon, IndustryPortIcon } from "./Icons.tsx";
+import {
+  ConditionIcon,
+  BoltIcon,
+  BriefcaseIcon,
+  StopIcon,
+  WarnIcon,
+  ShieldCheckIcon,
+  ThermometerIcon,
+  HumidityIcon,
+  WindIcon,
+  RainDropIcon,
+  CheckIcon,
+  XIcon,
+  ChatIcon,
+} from "./ui-icons.tsx";
 
 interface LandingPageProps {
   onOpenApp: () => void;
@@ -9,22 +24,6 @@ interface LandingPageProps {
   snapshot?: MonitorSnapshot | null;
   forecast?: Forecast | null;
 }
-
-/** Emoji para uma condição climática (evita repetir o ternário no JSX). */
-const conditionEmoji = (condition?: string): string => {
-  switch (condition) {
-    case "thunderstorm":
-      return "⛈️";
-    case "rain":
-      return "🌧️";
-    case "partly":
-      return "⛅";
-    case "clear":
-      return "☀️";
-    default:
-      return "☁️";
-  }
-};
 
 export default function LandingPage({
   onOpenApp,
@@ -59,7 +58,7 @@ export default function LandingPage({
         </div>
 
         <button className="btn-primary-glow" onClick={onOpenApp}>
-          ⚡ Abrir Monitor Ao Vivo
+          <BoltIcon size={14} style={{ marginRight: 6 }} />Abrir Monitor Ao Vivo
         </button>
       </nav>
 
@@ -77,10 +76,10 @@ export default function LandingPage({
         </p>
         <div className="hero-cta-group">
           <button className="btn-hero-primary" onClick={onOpenApp}>
-            ⚡ Acessar Monitor Gratuito
+            <BoltIcon size={15} style={{ marginRight: 6 }} />Acessar Monitor Gratuito
           </button>
           <button className="btn-hero-secondary" onClick={scrollToPricing}>
-            💼 Ver Planos B2B para Empresas
+            <BriefcaseIcon size={15} style={{ marginRight: 7 }} />Ver Planos B2B para Empresas
           </button>
         </div>
 
@@ -143,11 +142,13 @@ export default function LandingPage({
                       : "status-safe"
                   }`}
                 >
-                  {current?.condition === "thunderstorm"
-                    ? "🔴 Alerta NR-18: Risco de Raios / Paralisação"
-                    : current?.condition === "rain"
-                    ? "🟡 Atenção: Janela de Chuva no Campo"
-                    : "🟢 Janela Operacional Segura"}
+                  {current?.condition === "thunderstorm" ? (
+                    <><StopIcon size={14} style={{ marginRight: 6 }} />Alerta NR-18: Risco de Raios / Paralisação</>
+                  ) : current?.condition === "rain" ? (
+                    <><WarnIcon size={14} style={{ marginRight: 6 }} />Atenção: Janela de Chuva no Campo</>
+                  ) : (
+                    <><ShieldCheckIcon size={14} style={{ marginRight: 6 }} />Janela Operacional Segura</>
+                  )}
                 </span>
               </div>
             </div>
@@ -156,7 +157,7 @@ export default function LandingPage({
             {current ? (
               <div className="now-card-main-bar">
                 <div className="now-temp-block">
-                  <span className="now-inline-icon">{conditionEmoji(current.condition)}</span>
+                  <span className="now-inline-icon"><ConditionIcon condition={current.condition} size={40} /></span>
                   <div className="now-temp-text">
                     <span className="now-big-temp">{current.tempC}°C</span>
                     <span className="now-cond-desc">{current.conditionLabel}</span>
@@ -165,7 +166,7 @@ export default function LandingPage({
 
                 <div className="now-metrics-cluster">
                   <div className="weather-pill-card">
-                    <span className="pill-icon">🌡️</span>
+                    <span className="pill-icon"><ThermometerIcon size={18} style={{ color: "#d95926" }} /></span>
                     <div className="pill-content">
                       <span className="pill-label">Sensação</span>
                       <strong>{current.feelsLikeC}°C</strong>
@@ -173,7 +174,7 @@ export default function LandingPage({
                   </div>
 
                   <div className="weather-pill-card">
-                    <span className="pill-icon">💧</span>
+                    <span className="pill-icon"><HumidityIcon size={18} style={{ color: "#9085e9" }} /></span>
                     <div className="pill-content">
                       <span className="pill-label">Umidade</span>
                       <strong>{current.humidity}%</strong>
@@ -181,7 +182,7 @@ export default function LandingPage({
                   </div>
 
                   <div className="weather-pill-card">
-                    <span className="pill-icon">💨</span>
+                    <span className="pill-icon"><WindIcon size={18} style={{ color: "#199e70" }} /></span>
                     <div className="pill-content">
                       <span className="pill-label">Vento</span>
                       <strong>{current.windKmh} km/h</strong>
@@ -221,7 +222,7 @@ export default function LandingPage({
                     </span>
                   </div>
 
-                  <div className="daily-card-icon">{conditionEmoji(day.condition)}</div>
+                  <div className="daily-card-icon"><ConditionIcon condition={day.condition} size={34} /></div>
                   <div className="daily-card-cond">{day.conditionLabel}</div>
 
                   <div className="daily-temp-range">
@@ -235,11 +236,11 @@ export default function LandingPage({
 
                   <div className="daily-metrics">
                     <div className="daily-metric-row">
-                      <span>🌧️ Chuva:</span>
+                      <span><RainDropIcon size={13} style={{ marginRight: 5, color: "#3987e5" }} />Chuva:</span>
                       <strong>{day.precipSumMm} mm ({day.precipProbMax}%)</strong>
                     </div>
                     <div className="daily-metric-row">
-                      <span>💨 Vento Máx:</span>
+                      <span><WindIcon size={13} style={{ marginRight: 5, color: "#199e70" }} />Vento Máx:</span>
                       <strong>{day.windKmhMax} km/h</strong>
                     </div>
                   </div>
@@ -271,9 +272,9 @@ export default function LandingPage({
               Alertas de paralisação automática para trabalhos em andaimes, estaiamento e operação de guindastes conforme norma NR-18.
             </p>
             <ul>
-              <li>✓ Alertas por raio de aproximação (8 km / 15 km)</li>
-              <li>✓ Medição de vento em altitude para gruas</li>
-              <li>✓ Validação de janelas secas para concretagem</li>
+              <li><CheckIcon />Alertas por raio de aproximação (8 km / 15 km)</li>
+              <li><CheckIcon />Medição de vento em altitude para gruas</li>
+              <li><CheckIcon />Validação de janelas secas para concretagem</li>
             </ul>
           </div>
 
@@ -286,9 +287,9 @@ export default function LandingPage({
               Proteção de multidões, palcos e estruturas temporárias. Cronômetro "Tudo Limpo" para retomada segura da programação.
             </p>
             <ul>
-              <li>✓ Cronômetro de liberação (All-Clear 30 min)</li>
-              <li>✓ Alertas de rajadas repentinas de vento</li>
-              <li>✓ Disparo de emergência para brigadistas</li>
+              <li><CheckIcon />Cronômetro de liberação (All-Clear 30 min)</li>
+              <li><CheckIcon />Alertas de rajadas repentinas de vento</li>
+              <li><CheckIcon />Disparo de emergência para brigadistas</li>
             </ul>
           </div>
 
@@ -301,9 +302,9 @@ export default function LandingPage({
               Monitoramento de pátios de estocagem, linhas de transmissão de alta tensão e pátios de conteineres contra raios destrutivos.
             </p>
             <ul>
-              <li>✓ Análise de pico de amperagem em kA</li>
-              <li>✓ Separação de raios Nuvem-Solo (CG)</li>
-              <li>✓ Laudos de paralisação por Força Maior</li>
+              <li><CheckIcon />Análise de pico de amperagem em kA</li>
+              <li><CheckIcon />Separação de raios Nuvem-Solo (CG)</li>
+              <li><CheckIcon />Laudos de paralisação por Força Maior</li>
             </ul>
           </div>
         </div>
@@ -332,12 +333,12 @@ export default function LandingPage({
             </div>
 
             <ul className="plan-features">
-              <li>✔️ Feed ao vivo NOAA GOES-19 GLM</li>
-              <li>✔️ Mapa interativo de radar (120 km)</li>
-              <li>✔️ Análise básica de amperagem (kA)</li>
-              <li>✔️ Previsão do tempo Open-Meteo</li>
-              <li className="disabled">❌ Alertas automáticos via WhatsApp/SMS</li>
-              <li className="disabled">❌ Relatório em PDF por Força Maior</li>
+              <li><CheckIcon />Feed ao vivo NOAA GOES-19 GLM</li>
+              <li><CheckIcon />Mapa interativo de radar (120 km)</li>
+              <li><CheckIcon />Análise básica de amperagem (kA)</li>
+              <li><CheckIcon />Previsão do tempo Open-Meteo</li>
+              <li className="disabled"><XIcon />Alertas automáticos via WhatsApp/SMS</li>
+              <li className="disabled"><XIcon />Relatório em PDF por Força Maior</li>
             </ul>
 
             <button className="btn-plan-action btn-plan-action--free" onClick={onOpenApp}>
@@ -360,12 +361,12 @@ export default function LandingPage({
             </div>
 
             <ul className="plan-features">
-              <li>✔️ <strong>Tudo do Plano Gratuito +</strong></li>
-              <li>✔️ Geofencing por Obra/Local (8 km e 15 km)</li>
-              <li>✔️ <strong>Disparo no WhatsApp & SMS</strong> para equipes</li>
-              <li>✔️ Cronômetro "Tudo Limpo" (30 min)</li>
-              <li>✔️ Alertas de vento em altitude e rajadas</li>
-              <li>✔️ Suporte técnico prioritário</li>
+              <li><CheckIcon /><strong>Tudo do Plano Gratuito +</strong></li>
+              <li><CheckIcon />Geofencing por Obra/Local (8 km e 15 km)</li>
+              <li><CheckIcon /><strong>Disparo no WhatsApp & SMS</strong> para equipes</li>
+              <li><CheckIcon />Cronômetro "Tudo Limpo" (30 min)</li>
+              <li><CheckIcon />Alertas de vento em altitude e rajadas</li>
+              <li><CheckIcon />Suporte técnico prioritário</li>
             </ul>
 
             <button className="btn-plan-action btn-plan-action--pro" onClick={onOpenApp}>
@@ -385,11 +386,11 @@ export default function LandingPage({
             </div>
 
             <ul className="plan-features">
-              <li>✔️ <strong>Tudo do Plano B2B +</strong></li>
-              <li>✔️ Monitoramento de múltiplos locais no mesmo painel</li>
-              <li>✔️ <strong>Laudo em PDF de Força Maior</strong> para seguradoras</li>
-              <li>✔️ API dedicada de integração (Webhooks/REST)</li>
-              <li>✔️ Gerente de conta dedicado & SLA 24/7</li>
+              <li><CheckIcon /><strong>Tudo do Plano B2B +</strong></li>
+              <li><CheckIcon />Monitoramento de múltiplos locais no mesmo painel</li>
+              <li><CheckIcon /><strong>Laudo em PDF de Força Maior</strong> para seguradoras</li>
+              <li><CheckIcon />API dedicada de integração (Webhooks/REST)</li>
+              <li><CheckIcon />Gerente de conta dedicado & SLA 24/7</li>
             </ul>
 
             <button className="btn-plan-action btn-plan-action--enterprise" onClick={() => alert("Entre em contato com nossa equipe comercial pelo e-mail: comercial@nexocore.com.br")}>
@@ -432,7 +433,7 @@ export default function LandingPage({
         className="whatsapp-float-btn"
         title="Fale conosco no WhatsApp"
       >
-        <span className="whatsapp-icon">💬</span>
+        <span className="whatsapp-icon"><ChatIcon size={20} /></span>
         <span className="whatsapp-text">Falar com Consultor</span>
       </a>
     </div>

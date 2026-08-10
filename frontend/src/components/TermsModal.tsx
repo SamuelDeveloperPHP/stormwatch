@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { DocumentIcon, LockIcon, WarnIcon } from "./ui-icons.tsx";
 
 interface TermsModalProps {
   isOpen: boolean;
@@ -26,13 +27,13 @@ export default function TermsModal({ isOpen, onClose, defaultTab = "terms" }: Te
             className={`modal-tab ${activeTab === "terms" ? "modal-tab--active" : ""}`}
             onClick={() => setActiveTab("terms")}
           >
-            📋 Termos de Uso & Isenção
+            <DocumentIcon size={15} style={{ marginRight: 6 }} />Termos de Uso & Isenção
           </button>
           <button
             className={`modal-tab ${activeTab === "privacy" ? "modal-tab--active" : ""}`}
             onClick={() => setActiveTab("privacy")}
           >
-            🔒 Política de Privacidade (LGPD)
+            <LockIcon size={15} style={{ marginRight: 6 }} />Política de Privacidade (LGPD)
           </button>
         </nav>
 
@@ -43,7 +44,7 @@ export default function TermsModal({ isOpen, onClose, defaultTab = "terms" }: Te
               <p className="legal-version">Versão 1.0 — Uso Gratuito e Informativo</p>
               
               <div className="legal-alert legal-alert--warning">
-                <strong>⚠️ AVISO IMPORTANTE DE SEGURANÇA:</strong>
+                <strong><WarnIcon size={15} style={{ marginRight: 6 }} />AVISO IMPORTANTE DE SEGURANÇA:</strong>
                 <p>
                   O StormWatch é uma ferramenta tecnológica de apoio meramente informativo. 
                   <strong> NÃO substitui os alertas oficiais da Defesa Civil, do INMET nem equipamentos e laudos de Segurança do Trabalho (NR-10 / NBR 5419).</strong>

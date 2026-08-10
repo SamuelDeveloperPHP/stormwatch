@@ -2,6 +2,7 @@ import { MapContainer, TileLayer, Circle, Marker, Popup, useMap } from "react-le
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import type { MonitorSnapshot, Strike, StrikeFilter } from "../types.ts";
+import { BoltIcon, CloudIcon } from "./ui-icons.tsx";
 
 // Corrige o ícone padrão do Leaflet (quebra com bundlers se não apontarmos a URL).
 const markerIcon = new L.Icon({
@@ -430,7 +431,12 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark" }: P
               <Popup>
                 <strong>{s.distanceKm} km</strong> · {when}
                 <br />
-                Tipo: {s.type === "CG" ? "⚡ nuvem-solo (CG)" : "☁️ intra-nuvem (IC)"}
+                Tipo:{" "}
+                {s.type === "CG" ? (
+                  <><BoltIcon size={13} style={{ marginRight: 3 }} />nuvem-solo (CG)</>
+                ) : (
+                  <><CloudIcon size={13} style={{ marginRight: 3 }} />intra-nuvem (IC)</>
+                )}
                 {amp > 0 ? <> <br />Intensidade: <strong>{amp} kA</strong></> : null}
               </Popup>
             </Marker>
@@ -477,7 +483,7 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark" }: P
           Raios América do Sul (satélite ao vivo)
         </div>
         <div className="legend-row" style={{ color: "var(--ink-mute)", fontSize: 11 }}>
-          Tamanho do ⚡ indica a intensidade em kA.
+          Tamanho do marcador de raio indica a intensidade em kA.
         </div>
       </div>
     </div>

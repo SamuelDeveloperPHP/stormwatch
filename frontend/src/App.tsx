@@ -7,6 +7,7 @@ import TermsModal from "./components/TermsModal.tsx";
 import StrikeInfoModal from "./components/StrikeInfoModal.tsx";
 
 import LandingPage from "./components/LandingPage.tsx";
+import { HomeIcon, SunIcon, MoonIcon } from "./components/ui-icons.tsx";
 
 const POLL_MS = 30000; // a cada 30s (casa com o polling da NOAA no ingestor)
 
@@ -185,14 +186,18 @@ export default function App() {
             onClick={() => setViewMode("landing")}
             title="Voltar para a página inicial"
           >
-            🏠 Início / Planos
+            <HomeIcon size={15} style={{ marginRight: 6 }} />Início / Planos
           </button>
           <button
             className="theme-toggle-btn"
             onClick={toggleTheme}
             title="Alternar entre tema escuro e claro"
           >
-            {theme === "dark" ? "☀️ Modo Claro" : "🌙 Modo Escuro"}
+            {theme === "dark" ? (
+              <><SunIcon size={15} style={{ marginRight: 6 }} />Modo Claro</>
+            ) : (
+              <><MoonIcon size={15} style={{ marginRight: 6 }} />Modo Escuro</>
+            )}
           </button>
           <div className="topbar-time">
             {snapshot && (

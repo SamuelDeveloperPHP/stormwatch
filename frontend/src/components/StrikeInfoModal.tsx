@@ -1,3 +1,5 @@
+import { BoltIcon, CloudIcon } from "./ui-icons.tsx";
+
 interface StrikeInfoModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -12,7 +14,7 @@ export default function StrikeInfoModal({ isOpen, onClose }: StrikeInfoModalProp
       <div className="modal-content info-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <div className="info-modal-title">
-            <span className="info-modal-icon">⚡</span>
+            <span className="info-modal-icon"><BoltIcon size={22} /></span>
             <div>
               <h2>Guia de Leitura & Intensidade de Raios</h2>
               <p className="modal-subtitle">Entenda o que significam os dados em tempo real</p>
@@ -30,7 +32,7 @@ export default function StrikeInfoModal({ isOpen, onClose }: StrikeInfoModalProp
             <div className="info-cards-grid">
               <div className="info-card info-card--cg">
                 <div className="info-card-header">
-                  <span className="info-icon-badge info-icon-badge--cg">⚡ Nuvem-Solo (CG)</span>
+                  <span className="info-icon-badge info-icon-badge--cg"><BoltIcon size={14} style={{ marginRight: 5 }} />Nuvem-Solo (CG)</span>
                   <span className="info-tag info-tag--alert">Perigo Real</span>
                 </div>
                 <p>
@@ -41,7 +43,7 @@ export default function StrikeInfoModal({ isOpen, onClose }: StrikeInfoModalProp
 
               <div className="info-card info-card--ic">
                 <div className="info-card-header">
-                  <span className="info-icon-badge info-icon-badge--ic">☁️ Intra-Nuvem (IC)</span>
+                  <span className="info-icon-badge info-icon-badge--ic"><CloudIcon size={14} style={{ marginRight: 5 }} />Intra-Nuvem (IC)</span>
                   <span className="info-tag info-tag--info">Atividade Elétrica</span>
                 </div>
                 <p>
