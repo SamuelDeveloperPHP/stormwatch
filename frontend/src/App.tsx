@@ -37,7 +37,7 @@ export default function App() {
 
   // Estado para o tema Dark / Light
   const [theme, setTheme] = useState<"dark" | "light">(() => {
-    return (localStorage.getItem("stormwatch_theme") as "dark" | "light") || "dark";
+    return (localStorage.getItem("stormwatch_theme") as "dark" | "light") || "light";
   });
 
   useEffect(() => {
@@ -138,7 +138,8 @@ export default function App() {
     return () => ctrl.abort();
   }, [lat, lon]);
 
-  const geoNote = GEO_NOTE[geo];
+  // Estado para alternar entre Mapa e Painéis no celular (mobile)
+  const [mobileTab, setMobileTab] = useState<"map" | "panels">("map");
 
   if (viewMode === "landing") {
     return (
@@ -152,7 +153,6 @@ export default function App() {
         />
         <TermsModal
           isOpen={isTermsOpen}
-
           onClose={() => setIsTermsOpen(false)}
           defaultTab={termsTab}
         />
@@ -161,7 +161,7 @@ export default function App() {
   }
 
   return (
-    <div className="app">
+    <div className={`app mobile-view-${mobileTab}`}>
       <header className="topbar">
         <div className="brand" onClick={() => setViewMode("landing")} style={{ cursor: "pointer" }}>
           <span className="brand-dot" />
@@ -213,6 +213,22 @@ export default function App() {
           </div>
         </div>
       </header>
+
+      {/* Seletor de Abas para Celular (Mobile) */}
+      <div className="mobile-app-tabs">
+        <button
+          className={`mobile-tab-btn ${mobileTab === "map" ? "active" : ""}`}
+          onClick={() => setMobileTab("map")}
+        >
+          🗺️ Mapa de Raios Ao Vivo
+        </button>
+        <button
+          className={`mobile-tab-btn ${mobileTab === "panels" ? "active" : ""}`}
+          onClick={() => setMobileTab("panels")}
+        >
+          ⚡ Alertas & Previsão
+        </button>
+      </div>
 
       <aside className="sidebar">
         <div className="sidebar-col sidebar-col1">
