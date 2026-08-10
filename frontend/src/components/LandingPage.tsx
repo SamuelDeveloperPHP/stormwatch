@@ -331,20 +331,15 @@ export default function LandingPage({
 
         <div className="section-header">
           <h2>Escolha o Plano Ideal para a Sua Operação</h2>
-          <p>Do acesso gratuito para cidadãos a soluções enterprise com emissão de laudos.</p>
+          <p>Do acesso gratuito para cidadãos a soluções completas com emissão de laudos.</p>
         </div>
 
         <div className="pricing-grid">
           {/* Free Tier */}
           <div className="pricing-card">
             <div className="pricing-header">
-              <span className="plan-badge plan-badge--free">Comunitário</span>
+              <span className="plan-badge plan-badge--free">Gratuito</span>
               <h3>Plano Gratuito</h3>
-              <div className="price-box">
-                <span className="price-currency">R$</span>
-                <span className="price-amount">0</span>
-                <span className="price-period">/ mês</span>
-              </div>
               <p className="plan-desc">Acesso público para cidadãos e entusiastas da meteorologia.</p>
             </div>
 
@@ -362,17 +357,12 @@ export default function LandingPage({
             </button>
           </div>
 
-          {/* B2B Pro Tier (Featured) */}
+          {/* Intermediate Tier (Featured) */}
           <div className="pricing-card pricing-card--featured">
             <div className="featured-ribbon">MAIS POPULAR PARA OBRAS E EVENTOS</div>
             <div className="pricing-header">
-              <span className="plan-badge plan-badge--pro">B2B Profissional</span>
-              <h3>Obras & Eventos</h3>
-              <div className="price-box">
-                <span className="price-currency">R$</span>
-                <span className="price-amount">299</span>
-                <span className="price-period">/ mês por local</span>
-              </div>
+              <span className="plan-badge plan-badge--pro">Intermediário</span>
+              <h3>Plano Intermediário</h3>
               <p className="plan-desc">Ideal para canteiros de obras, produtores de shows e arenas.</p>
             </div>
 
@@ -385,33 +375,42 @@ export default function LandingPage({
               <li><CheckIcon />Suporte técnico prioritário</li>
             </ul>
 
-            <button className="btn-plan-action btn-plan-action--pro" onClick={onOpenApp}>
-              Testar Grátis por 14 Dias
-            </button>
+            <a
+              href="https://wa.me/5541988885871?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20o%20Plano%20Intermedi%C3%A1rio%20do%20StormWatch"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-plan-action btn-plan-action--pro"
+              style={{ textDecoration: "none", display: "inline-flex", justifyContent: "center", alignItems: "center" }}
+            >
+              Falar com Consultor
+            </a>
           </div>
 
-          {/* Enterprise Tier */}
+          {/* Complete Tier */}
           <div className="pricing-card">
             <div className="pricing-header">
-              <span className="plan-badge plan-badge--enterprise">Enterprise</span>
-              <h3>Multi-Sítios & Corporativo</h3>
-              <div className="price-box">
-                <span className="price-amount" style={{ fontSize: 28 }}>Sob Consulta</span>
-              </div>
+              <span className="plan-badge plan-badge--enterprise">Completo</span>
+              <h3>Plano Completo</h3>
               <p className="plan-desc">Para grandes construtoras, concessionárias e multi-eventos.</p>
             </div>
 
             <ul className="plan-features">
-              <li><CheckIcon /><strong>Tudo do Plano B2B +</strong></li>
+              <li><CheckIcon /><strong>Tudo do Plano Intermediário +</strong></li>
               <li><CheckIcon />Monitoramento de múltiplos locais no mesmo painel</li>
               <li><CheckIcon /><strong>Laudo em PDF de Força Maior</strong> para seguradoras</li>
               <li><CheckIcon />API dedicada de integração (Webhooks/REST)</li>
               <li><CheckIcon />Gerente de conta dedicado & SLA 24/7</li>
             </ul>
 
-            <button className="btn-plan-action btn-plan-action--enterprise" onClick={() => alert("Entre em contato com nossa equipe comercial pelo e-mail: comercial@nexocore.com.br")}>
+            <a
+              href="https://wa.me/5541988885871?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20o%20Plano%20Completo%20do%20StormWatch"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-plan-action btn-plan-action--enterprise"
+              style={{ textDecoration: "none", display: "inline-flex", justifyContent: "center", alignItems: "center" }}
+            >
               Falar com Consultor
-            </button>
+            </a>
           </div>
         </div>
       </section>
