@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { Forecast, MonitorSnapshot } from "../types.ts";
 import HourlyForecastWidget from "./HourlyForecastWidget.tsx";
 import { CraneIcon, StageEventsIcon, IndustryPortIcon } from "./Icons.tsx";
