@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -35,6 +36,102 @@ interface HourlyForecastWidgetProps {
 type MetricTab = "temp" | "rain" | "wind" | "humidity";
 type ViewMode = "graph" | "table";
 
+// ── Ícones vetoriais minimalistas (estilo dashboard/BI) ────────────────────
+// Traço fino, monocromático (herda `currentColor`), sem preenchimento sólido.
+function Svg({ size = 15, style, children }: { size?: number; style?: CSSProperties; children: ReactNode }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      aria-hidden="true"
+      style={style}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.6}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      {children}
+    </svg>
+  );
+}
+
+// Ícone da condição do tempo — tom neutro (herda a cor do texto), sóbrio.
+function ConditionIcon({ cond, size = 15, style }: { cond?: string; size?: number; style?: CSSProperties }) {
+  switch (cond) {
+    case "clear":
+      return (
+        <Svg size={size} style={style}>
+          <circle cx="12" cy="12" r="4.2" />
+          <path d="M12 2.6v2.3M12 19.1v2.3M2.6 12h2.3M19.1 12h2.3M5.2 5.2l1.6 1.6M17.2 17.2l1.6 1.6M18.8 5.2l-1.6 1.6M6.8 17.2l-1.6 1.6" />
+        </Svg>
+      );
+    case "partly":
+      return (
+        <Svg size={size} style={style}>
+          <circle cx="8.5" cy="7.5" r="2.7" />
+          <path d="M8.5 2.6v1.5M3.4 7.5h1.5M4.9 4.9l1 1M13.1 4.9l-1 1" />
+          <path d="M7 18.5h8.5a3 3 0 0 0 .2-6A4 4 0 0 0 8 12.4 3.2 3.2 0 0 0 7 18.5z" />
+        </Svg>
+      );
+    case "rain":
+      return (
+        <Svg size={size} style={style}>
+          <path d="M6.5 14.5h9.8a3.3 3.3 0 0 0 .3-6.6A4.5 4.5 0 0 0 7.8 6.7 3.5 3.5 0 0 0 6.5 14.5z" />
+          <path d="M9 17.5l-1 2.4M12.5 17.5l-1 2.4M16 17.5l-1 2.4" />
+        </Svg>
+      );
+    case "thunderstorm":
+      return (
+        <Svg size={size} style={style}>
+          <path d="M6.5 14h9.8a3.3 3.3 0 0 0 .3-6.6A4.5 4.5 0 0 0 7.8 6.2 3.5 3.5 0 0 0 6.5 14z" />
+          <path d="M12.4 14.8l-2.9 4.2h2.2l-1 3.2 3.8-4.9h-2.5z" fill="currentColor" stroke="none" />
+        </Svg>
+      );
+    default:
+      return (
+        <Svg size={size} style={style}>
+          <path d="M6.5 16.5h10a3.5 3.5 0 0 0 .3-7A4.8 4.8 0 0 0 7.7 8 3.7 3.7 0 0 0 6.5 16.5z" />
+        </Svg>
+      );
+  }
+}
+
+// Micro-ícones das 4 métricas — cada um carrega a cor da sua aba (via `style`).
+function TempIcon({ style }: { style?: CSSProperties }) {
+  return (
+    <Svg size={13} style={style}>
+      <path d="M14 14.9V5.6a2 2 0 1 0-4 0v9.3a3.6 3.6 0 1 0 4 0z" />
+    </Svg>
+  );
+}
+function RainDropIcon({ style }: { style?: CSSProperties }) {
+  return (
+    <Svg size={13} style={style}>
+      <path d="M12 3.8c3.1 3.7 4.8 6.2 4.8 8.7a4.8 4.8 0 0 1-9.6 0c0-2.5 1.7-5 4.8-8.7z" />
+    </Svg>
+  );
+}
+function WindIcon({ style }: { style?: CSSProperties }) {
+  return (
+    <Svg size={13} style={style}>
+      <path d="M3 8.5h9.5A2.3 2.3 0 1 0 10.2 6.2" />
+      <path d="M3 12.5h13a2.3 2.3 0 1 1-2.3 2.3" />
+      <path d="M3 16.5h6.5" />
+    </Svg>
+  );
+}
+function HumidityIcon({ style }: { style?: CSSProperties }) {
+  return (
+    <Svg size={13} style={style}>
+      <path d="M12 3.8c3.1 3.7 4.8 6.2 4.8 8.7a4.8 4.8 0 0 1-9.6 0c0-2.5 1.7-5 4.8-8.7z" />
+      <path d="M8.4 13.4h7.2" />
+    </Svg>
+  );
+}
+const mIco = (color: string): CSSProperties => ({ color, verticalAlign: "-2px", marginRight: 3 });
+
 export default function HourlyForecastWidget({ forecast, place }: HourlyForecastWidgetProps) {
   const [tab, setTab] = useState<MetricTab>("temp");
   const [viewMode, setViewMode] = useState<ViewMode>("graph");
@@ -58,14 +155,6 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
     if (deg == null) return "↑";
     const directions = ["↓", "↙", "←", "↖", "↑", "↗", "→", "↘"];
     return directions[Math.round(deg / 45) % 8];
-  };
-
-  const getConditionIcon = (cond?: string) => {
-    if (cond === "thunderstorm") return "⛈️";
-    if (cond === "rain") return "🌧️";
-    if (cond === "partly") return "⛅";
-    if (cond === "clear") return "☀️";
-    return "☁️";
   };
 
   // Cor sóbria e coesa por métrica (paleta BI validada — temp/chuva/vento/umidade).
@@ -272,16 +361,20 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
             {points.map((p) => (
               <div className="info-col-item" key={p.time}>
                 <span className="col-hour">{p.hourLabel}</span>
-                <span className="col-icon" title={p.conditionLabel}>{getConditionIcon(p.condition)}</span>
-                <span className="col-temp">{p.tempC}°C</span>
+                <span className="col-icon" title={p.conditionLabel}>
+                  <ConditionIcon cond={p.condition} />
+                </span>
+                <span className="col-temp">
+                  <TempIcon style={mIco("#d95926")} />{p.tempC}°C
+                </span>
                 <span className="col-rain" title="Volume e Probabilidade de Chuva">
-                  🌧️ {p.precipMm ?? 0}mm ({p.precipProb}%)
+                  <RainDropIcon style={mIco("#3987e5")} />{p.precipMm ?? 0}mm ({p.precipProb}%)
                 </span>
                 <span className="col-wind" title="Velocidade e Direção do Vento">
-                  💨 {p.windKmh ?? 0}k/h {getWindArrow(p.windDirDeg)}
+                  <WindIcon style={mIco("#199e70")} />{p.windKmh ?? 0}k/h {getWindArrow(p.windDirDeg)}
                 </span>
                 <span className="col-hum" title="Umidade Relativa">
-                  💧 {p.humidity ?? 0}%
+                  <HumidityIcon style={mIco("#9085e9")} />{p.humidity ?? 0}%
                 </span>
               </div>
             ))}
@@ -306,7 +399,9 @@ export default function HourlyForecastWidget({ forecast, place }: HourlyForecast
                 <tr key={p.time}>
                   <td><strong>{p.hourLabel}</strong></td>
                   <td>
-                    <span style={{ marginRight: 6 }}>{getConditionIcon(p.condition)}</span>
+                    <span style={{ marginRight: 6, verticalAlign: "-3px", display: "inline-block" }}>
+                      <ConditionIcon cond={p.condition} size={16} />
+                    </span>
                     {p.conditionLabel || p.condition}
                   </td>
                   <td><strong>{p.tempC}°C</strong></td>
