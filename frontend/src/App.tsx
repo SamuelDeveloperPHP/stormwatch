@@ -143,6 +143,16 @@ export default function App() {
   // Estado para alternar entre Mapa e Painéis no celular (mobile)
   const [mobileTab, setMobileTab] = useState<"map" | "panels">("map");
 
+  // Recalcula o mapa Leaflet sempre que a aba mobile mudo para mapa
+  useEffect(() => {
+    if (mobileTab === "map") {
+      const t = setTimeout(() => {
+        window.dispatchEvent(new Event("resize"));
+      }, 150);
+      return () => clearTimeout(t);
+    }
+  }, [mobileTab]);
+
   if (viewMode === "landing") {
     return (
       <>
