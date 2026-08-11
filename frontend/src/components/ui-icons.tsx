@@ -234,3 +234,11 @@ export function BriefcaseIcon({ size = 15, style }: IcoProps) {
     </Svg>
   );
 }
+
+export function CloseIcon({ size = 16, style }: IcoProps) {
+  return (
+    <Svg size={size} style={style}>
+      <path d="M18 6L6 18M6 6l12 12" />
+    </Svg>
+  );
+}

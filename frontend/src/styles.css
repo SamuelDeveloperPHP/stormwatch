@@ -2592,3 +2592,31 @@ h1, h2, h3, h4 {
     transform: translateY(0);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   ESTILOS DOS MÓDULOS PAGOS B2B (GEOFENCING, WHATSAPP & LAUDOS)
+   ═══════════════════════════════════════════════════════════════════ */
+.b2b-tab-btn {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--chip);
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.b2b-tab-btn:hover {
+  border-color: #0284c7;
+  color: var(--ink);
+}
+
+.b2b-tab-btn.active {
+  background: #0284c7;
+  color: #ffffff;
+  border-color: #0284c7;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+}
