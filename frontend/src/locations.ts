@@ -17,7 +17,7 @@ export interface MonitorSite {
   criticalRadiusKm: number;
   alertRadiusKm: number;
   peopleCount: number;
-  category?: "Obra" | "Evento" | "Porto / Indústria" | "Escritório" | "Outro";
+  category?: "Aeroporto" | "Obra" | "Evento" | "Porto / Indústria" | "Escritório" | "Outro";
   responsibleName?: string;
   managerPhone?: string;
 }

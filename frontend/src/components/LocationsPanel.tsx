@@ -31,7 +31,7 @@ export default function LocationsPanel({
 }: LocationsPanelProps) {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
-  const [category, setCategory] = useState<"Obra" | "Evento" | "Porto / Indústria" | "Escritório" | "Outro">("Obra");
+  const [category, setCategory] = useState<"Aeroporto" | "Obra" | "Evento" | "Porto / Indústria" | "Escritório" | "Outro">("Aeroporto");
   const [responsibleName, setResponsibleName] = useState("");
   const [managerPhone, setManagerPhone] = useState("");
   const [latVal, setLatVal] = useState("-25.4411");
@@ -56,31 +56,64 @@ export default function LocationsPanel({
     minute: "2-digit",
   });
 
-  // Busca de Coordenadas por Geocoding (OpenStreetMap Nominatim)
+  // Busca Inteligente de Coordenadas (Geocoding com Fallbacks Multi-provedor)
   const handleSearchCoordinates = async () => {
-    if (!address.trim()) {
-      setGeoErrorMsg("Digite o endereço para realizar a busca.");
+    const rawQuery = [address.trim(), name.trim()].filter(Boolean).join(" ");
+    if (!rawQuery) {
+      setGeoErrorMsg("Digite o nome ou endereço do local para realizar a busca.");
       return;
     }
     setIsSearchingGeo(true);
     setGeoErrorMsg(null);
     setGeoSuccessMsg(null);
+
     try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address.trim())}`
+      // 1. Open-Meteo Geocoding API (Ideal para Aeroportos, Cidades e Locais no Brasil)
+      const queryToSearch = address.trim() || name.trim();
+      const meteoRes = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(queryToSearch)}&count=1&language=pt`
       );
-      const data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        const latNum = parseFloat(data[0].lat);
-        const lonNum = parseFloat(data[0].lon);
+      const meteoData = await meteoRes.json();
+      if (meteoData?.results?.[0]) {
+        const item = meteoData.results[0];
+        setLatVal(item.latitude.toFixed(5));
+        setLonVal(item.longitude.toFixed(5));
+        const label = item.name + (item.admin1 ? `, ${item.admin1}` : "") + (item.country ? ` - ${item.country}` : "");
+        setGeoSuccessMsg(`📍 Localizado: ${label} (Lat: ${item.latitude.toFixed(4)}, Lon: ${item.longitude.toFixed(4)})`);
+        return;
+      }
+
+      // 2. Fallback OpenStreetMap Nominatim API
+      const nomRes = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(rawQuery)}`
+      );
+      const nomData = await nomRes.json();
+      if (Array.isArray(nomData) && nomData.length > 0) {
+        const latNum = parseFloat(nomData[0].lat);
+        const lonNum = parseFloat(nomData[0].lon);
         setLatVal(latNum.toFixed(5));
         setLonVal(lonNum.toFixed(5));
-        setGeoSuccessMsg(`📍 Localizado! Lat: ${latNum.toFixed(4)}, Lon: ${lonNum.toFixed(4)}`);
-      } else {
-        setGeoErrorMsg("Endereço não localizado. Ajuste a grafia ou insira as coordenadas manualmente.");
+        setGeoSuccessMsg(`📍 Localizado! Lat: ${latNum.toFixed(4)}, Lon: ${lonNum.toFixed(4)} (${nomData[0].display_name.split(',')[0]})`);
+        return;
       }
+
+      // 3. Fallback Nominatim com busca simples por nome/endereço
+      const nomRes2 = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(queryToSearch)}`
+      );
+      const nomData2 = await nomRes2.json();
+      if (Array.isArray(nomData2) && nomData2.length > 0) {
+        const latNum = parseFloat(nomData2[0].lat);
+        const lonNum = parseFloat(nomData2[0].lon);
+        setLatVal(latNum.toFixed(5));
+        setLonVal(lonNum.toFixed(5));
+        setGeoSuccessMsg(`📍 Localizado! Lat: ${latNum.toFixed(4)}, Lon: ${lonNum.toFixed(4)} (${nomData2[0].display_name.split(',')[0]})`);
+        return;
+      }
+
+      setGeoErrorMsg("Local não localizado. Tente digitar o nome da cidade ou aeroporto (ex: 'Aeroporto de Londrina' ou 'Londrina PR').");
     } catch {
-      setGeoErrorMsg("Falha na busca de coordenadas. Verifique a conexão.");
+      setGeoErrorMsg("Falha de rede na busca de GPS. Insira as coordenadas manualmente.");
     } finally {
       setIsSearchingGeo(false);
     }
@@ -247,10 +280,11 @@ export default function LocationsPanel({
                   onChange={(e) => setCategory(e.target.value as any)}
                   style={{ width: "100%", padding: 9, borderRadius: 8, border: "1px solid var(--line)", background: "var(--panel)", color: "var(--ink)" }}
                 >
-                  <option value="Obra">Obra / Construção Civil</option>
-                  <option value="Evento">Show / Arena de Eventos</option>
-                  <option value="Porto / Indústria">Porto / Mineração / Indústria</option>
-                  <option value="Escritório">Escritório / Sede Corporativa</option>
+                  <option value="Aeroporto">Aeroporto / Aviação ✈️</option>
+                  <option value="Obra">Obra / Construção Civil 🏗️</option>
+                  <option value="Evento">Show / Arena de Eventos 🎪</option>
+                  <option value="Porto / Indústria">Porto / Mineração / Indústria ⚓</option>
+                  <option value="Escritório">Escritório / Sede Corporativa 🏢</option>
                   <option value="Outro">Outro</option>
                 </select>
               </label>
