@@ -46,8 +46,8 @@ export default function TermsModal({ isOpen, onClose, defaultTab = "terms" }: Te
               <div className="legal-alert legal-alert--warning">
                 <strong><WarnIcon size={15} style={{ marginRight: 6 }} />AVISO IMPORTANTE DE SEGURANÇA:</strong>
                 <p>
-                  O StormWatch é uma ferramenta tecnológica de apoio meramente informativo. 
-                  <strong> NÃO substitui os alertas oficiais da Defesa Civil, do INMET nem equipamentos e laudos de Segurança do Trabalho (NR-10 / NBR 5419).</strong>
+                  O StormWatch é uma ferramenta tecnológica de apoio à decisão, de caráter informativo.
+                  <strong> NÃO substitui os alertas oficiais da Defesa Civil, do INMET, os equipamentos e laudos de Segurança do Trabalho (NR-10 / NBR 5419), nem a avaliação de profissional legalmente habilitado (engenheiro de segurança do trabalho com ART).</strong>
                 </p>
               </div>
 
@@ -61,9 +61,9 @@ export default function TermsModal({ isOpen, onClose, defaultTab = "terms" }: Te
                 O serviço é disponibilizado "COMO ESTÁ" (<em>AS IS</em>) e "CONFORME DISPONÍVEL", sem qualquer garantia explícita, implícita ou legal referente à exatidão geográfica, precisão do tempo de detecção de raios, disponibilidade ininterrupta do servidor ou adequação a propósitos específicos.
               </p>
 
-              <h4>3. Exclusão Total de Responsabilidade por Danos</h4>
+              <h4>3. Limitação de Responsabilidade por Danos</h4>
               <p>
-                Os desenvolvedores, mantenedores e colaboradores do StormWatch <strong>NÃO SERÃO RESPONSÁVEIS</strong> por quaisquer danos diretos, indiretos, materiais, pessoais, morais ou lucros cessantes decorrentes de:
+                Na máxima extensão permitida pela legislação aplicável, os desenvolvedores, mantenedores e colaboradores do StormWatch <strong>não serão responsáveis</strong> por danos diretos, indiretos, materiais, pessoais, morais ou lucros cessantes decorrentes de:
               </p>
               <ul>
                 <li>Decisões tomadas ou ações realizadas com base nas informações exibidas no mapa e painéis;</li>
@@ -73,10 +73,20 @@ export default function TermsModal({ isOpen, onClose, defaultTab = "terms" }: Te
 
               <h4>4. Exclusiva Responsabilidade do Usuário</h4>
               <p>
-                O usuário reconhece e concorda que a tomada de decisões sobre segurança pessoal, busca de abrigo ou paralisação de atividades ao ar livre é de sua exclusiva responsabilidade.
+                O usuário reconhece e concorda que a tomada de decisões sobre segurança pessoal, busca de abrigo ou paralisação/retomada de atividades ao ar livre é de sua <strong>exclusiva responsabilidade</strong>, cabendo sempre o bom senso ("ouviu trovão, recolha-se").
               </p>
 
-              <h4>5. Alteração e Descontinuidade</h4>
+              <h4>5. Precisão dos Dados e Limitações Técnicas</h4>
+              <p>
+                Os dados de raios provêm do produto público NOAA GOES-19 GLM, que detecta a ocorrência e a localização das descargas com incerteza de posição da ordem de ~10&nbsp;km e latência típica de 1 a 2 minutos, a partir de <strong>fonte única</strong>. Valores de amperagem (kA) e a classificação Nuvem-Solo/Intranuvem, quando exibidos, são <strong>estimativas ilustrativas</strong> e não são medidos pelo GLM.
+              </p>
+
+              <h4>6. Módulos Pagos, Alertas e Relatórios (B2B)</h4>
+              <p>
+                O geofencing, os alertas por WhatsApp/SMS e os relatórios em PDF são recursos de <strong>apoio à decisão</strong>. A entrega de alertas depende de terceiros (operadoras, WhatsApp) e não é garantida. Os relatórios gerados são <strong>registros de telemetria</strong> — não constituem laudo técnico, parecer pericial ou jurídico, e não substituem documento assinado por profissional habilitado (ART). O uso comercial é regido por contrato específico, que prevalece sobre estes Termos no que for divergente.
+              </p>
+
+              <h4>7. Alteração e Descontinuidade</h4>
               <p>
                 Por se tratar de um serviço público gratuito, reservamo-nos o direito de alterar, suspender ou descontinuar a aplicação a qualquer tempo, sem prévio aviso.
               </p>
