@@ -336,6 +336,14 @@ function RadarSweepLayer({
   return null;
 }
 
+function RecenterMap({ center }: { center: [number, number] }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo(center, Math.max(map.getZoom(), 8), { duration: 1.2 });
+  }, [center, map]);
+  return null;
+}
+
 interface Props {
   snapshot: MonitorSnapshot | null;
   filter?: StrikeFilter;
@@ -344,10 +352,15 @@ interface Props {
   selectedSiteId?: string | null;
 }
 
-export default function StormMap({ snapshot, filter = "all", theme = "dark", sites = [] }: Props) {
-  const center: [number, number] = snapshot
+export default function StormMap({ snapshot, filter = "all", theme = "dark", sites = [], selectedSiteId }: Props) {
+  const defaultCenter: [number, number] = snapshot
     ? [snapshot.location.lat, snapshot.location.lon]
     : [-25.5306, -49.2939];
+
+  const selectedSite = sites.find((s) => s.id === selectedSiteId);
+  const activeCenter: [number, number] = selectedSite
+    ? [selectedSite.lat, selectedSite.lon]
+    : defaultCenter;
 
   const radiusKm = snapshot?.radiusKm ?? 8;
   const RING_STEP_KM = 15;
@@ -377,7 +390,8 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
 
   return (
     <div className="map-wrap">
-      <MapContainer center={center} zoom={7} scrollWheelZoom>
+      <MapContainer center={activeCenter} zoom={7} scrollWheelZoom>
+        <RecenterMap center={activeCenter} />
         <TileLayer
           key={theme}
           attribution={tileAttribution}
@@ -386,13 +400,14 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
 
         <IncidenceFlashLayer points={snapshot?.regionStrikes ?? []} />
 
-        <RadarSweepLayer center={center} strikes={filteredStrikes} radiusKm={radiusKm} />
+        {/* Varredura por Radar Sonar rotativo no centro ativo */}
+        <RadarSweepLayer center={activeCenter} strikes={filteredStrikes} radiusKm={radiusKm} />
 
-        <Marker position={center} icon={markerIcon}>
-          <Popup>{snapshot?.location.label ?? "Local monitorado"}</Popup>
+        <Marker position={defaultCenter} icon={markerIcon}>
+          <Popup>{snapshot?.location.label ?? "Sua Geolocalização Atual"}</Popup>
         </Marker>
 
-        {/* Marcadores e Círculos de Geofencing para todos os canteiros cadastrados */}
+        {/* Marcadores, Círculos de Geofencing e Anéis de Radar Sonar para cada local cadastrado */}
         {sites.map((site) => (
           <div key={site.id}>
             <Marker position={[site.lat, site.lon]} icon={markerIcon}>
@@ -412,6 +427,21 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
               </Popup>
             </Marker>
 
+            {/* Anéis Concentricos de Radar Sonar por Local */}
+            {rings.map((km) => (
+              <Circle
+                key={`site-ring-${site.id}-${km}`}
+                center={[site.lat, site.lon]}
+                radius={km * 1000}
+                pathOptions={{
+                  color: site.id === selectedSiteId ? "#0284c7" : ringColor,
+                  weight: site.id === selectedSiteId ? 1.5 : 0.8,
+                  opacity: site.id === selectedSiteId ? 0.6 : (isLight ? 0.3 : 0.2),
+                  fill: false,
+                }}
+              />
+            ))}
+
             {/* Círculo de Raio Crítico (Vermelho) */}
             <Circle
               center={[site.lat, site.lon]}
@@ -419,7 +449,7 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
               pathOptions={{
                 color: "#ef4444",
                 fillColor: "#ef4444",
-                fillOpacity: 0.1,
+                fillOpacity: 0.12,
                 weight: 2,
               }}
             />
@@ -439,10 +469,11 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
           </div>
         ))}
 
+        {/* Anéis de Radar Sonar da Geolocalização Padrão */}
         {rings.map((km) => (
           <Circle
             key={`ref-${km}`}
-            center={center}
+            center={defaultCenter}
             radius={km * 1000}
             pathOptions={{
               color: ringColor,
