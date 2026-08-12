@@ -485,7 +485,7 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
         ))}
 
         <Circle
-          center={center}
+          center={defaultCenter}
           radius={radiusKm * 1000}
           pathOptions={{
             color: ringColor,
