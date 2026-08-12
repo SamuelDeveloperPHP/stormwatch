@@ -14,19 +14,32 @@ const markerIcon = new L.Icon({
   iconAnchor: [12, 41],
 });
 
+// Função utilitária para distância Haversine em km
+function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 // Ícone de RELÂMPAGO para cada raio (marcação no mapa).
-// Cor e escala ajustadas dinamicamente de acordo com a intensidade (kA) e distância.
+// Raios dentro dos canteiros/locais cadastrados assumem a cor AMARELA (#facc15).
 const BOLT_PATH = "M7 2v11h3v9l7-12h-4l4-8z";
-function boltIcon(near: boolean, ampKa: number) {
+function boltIcon(near: boolean, ampKa: number, isSiteStrike: boolean = false) {
   const amp = Math.abs(ampKa || 0);
-  let color = near ? "#ef4444" : "#f59e0b"; // Vermelho perto, Âmbar longe
-  if (amp >= 40) {
-    color = "#dc2626"; // Vermelho forte/púrpura para alta energia
-  } else if (amp >= 20) {
-    color = near ? "#ea580c" : "#d97706";
+  let color = isSiteStrike ? "#facc15" : near ? "#ef4444" : "#f59e0b"; // Amarelo vívido para raios em canteiros cadastrados
+  if (!isSiteStrike && amp >= 40) {
+    color = "#dc2626";
   }
 
-  const scale = amp >= 40 ? 24 : amp >= 20 ? 20 : 16;
+  const scale = isSiteStrike ? 22 : amp >= 40 ? 24 : amp >= 20 ? 20 : 16;
   const anchor = Math.round(scale / 2);
 
   return L.divIcon({
@@ -407,7 +420,7 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
           <Popup>{snapshot?.location.label ?? "Sua Geolocalização Atual"}</Popup>
         </Marker>
 
-        {/* Marcadores, Círculos de Geofencing e Anéis de Radar Sonar para cada local cadastrado */}
+        {/* Marcadores e Círculos dos 2 Raios (Crítico e Alerta) para cada local cadastrado */}
         {sites.map((site) => (
           <div key={site.id}>
             <Marker position={[site.lat, site.lon]} icon={markerIcon}>
@@ -426,21 +439,6 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
                 </div>
               </Popup>
             </Marker>
-
-            {/* Anéis Concentricos de Radar Sonar por Local */}
-            {rings.map((km) => (
-              <Circle
-                key={`site-ring-${site.id}-${km}`}
-                center={[site.lat, site.lon]}
-                radius={km * 1000}
-                pathOptions={{
-                  color: site.id === selectedSiteId ? "#0284c7" : ringColor,
-                  weight: site.id === selectedSiteId ? 1.5 : 0.8,
-                  opacity: site.id === selectedSiteId ? 0.6 : (isLight ? 0.3 : 0.2),
-                  fill: false,
-                }}
-              />
-            ))}
 
             {/* Círculo de Raio Crítico (Vermelho) */}
             <Circle
@@ -497,9 +495,13 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
           }}
         />
 
-
+        {/* Renderização de Raios no Mapa */}
         {filteredStrikes.map((s) => {
           const near = s.distanceKm <= radiusKm;
+          // Verifica se o raio caiu dentro do raio de alerta de algum canteiro/local cadastrado
+          const isSiteStrike = sites.some(
+            (site) => getDistanceKm(s.lat, s.lon, site.lat, site.lon) <= Math.max(site.alertRadiusKm, site.criticalRadiusKm)
+          );
           const when = new Date(s.timestamp).toLocaleTimeString("pt-BR", {
             hour: "2-digit",
             minute: "2-digit",
@@ -507,9 +509,10 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
           const amp = Math.abs(s.peakAmpKa || 0);
 
           return (
-            <Marker key={s.id} position={[s.lat, s.lon]} icon={boltIcon(near, amp)}>
+            <Marker key={s.id} position={[s.lat, s.lon]} icon={boltIcon(near, amp, isSiteStrike)}>
               <Popup>
                 <strong>{s.distanceKm} km</strong> · {when}
+                {isSiteStrike && <div style={{ color: "#eab308", fontWeight: 700, fontSize: 11 }}>⚡ Raio detectado no raio do local cadastrado!</div>}
                 <br />
                 Tipo:{" "}
                 {s.type === "CG" ? (
@@ -527,6 +530,9 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
       <div className="legend">
         <div className="legend-row">
           <span className="legend-ring" /> Anéis a cada {RING_STEP_KM} km (até {RING_MAX_KM} km)
+        </div>
+        <div className="legend-row">
+          <BoltGlyph color="#facc15" /> Raio detectado em canteiro / local monitorado
         </div>
         <div className="legend-row">
           <span
