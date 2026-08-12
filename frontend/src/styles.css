@@ -537,6 +537,13 @@ h1, h2, h3, h4 {
   text-align: center;
 }
 
+.bolt-marker,
+.bolt-marker svg {
+  animation: none !important;
+  transition: none !important;
+  transform-origin: center center;
+}
+
 .filter-chip:hover {
   background: var(--line);
   color: var(--ink);

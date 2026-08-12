@@ -26,6 +26,21 @@ const userMarkerIcon = L.divIcon({
   popupAnchor: [0, -38],
 });
 
+// Função utilitária para distância Haversine em km
+function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
 interface StrikeAnalysis {
   zone: "critical" | "alert" | "outer";
   matchedSiteName?: string;
@@ -182,27 +197,23 @@ function IncidenceFlashLayer({
         if (analysis.zone === "critical") {
           color = "#ef4444"; // vermelho raio crítico
         } else if (analysis.zone === "alert") {
-          color = "#facc15"; // amarelo raio alerta
+          color = "#facc15"; 
         }
 
-        out.push({ x: cp.x, y: cp.y, ph: (i % 3) * 0.3, color });
+        out.push({ x: cp.x, y: cp.y, color });
       }
       projected = out;
       dirtyRef.current = false;
     }
 
-    function draw(tsec: number) {
+    function draw() {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       for (let k = 0; k < projected.length; k++) {
         const p = projected[k];
-        const a = reduceMotion
-          ? 1
-          : 0.25 + 0.75 * (0.5 + 0.5 * Math.sin(((tsec + p.ph) / 0.9) * Math.PI * 2));
-
-        ctx.globalAlpha = a;
+        ctx.globalAlpha = 0.95; 
         ctx.save();
         ctx.translate(p.x - 7, p.y - 10);
         ctx.scale(0.65, 0.65);
@@ -219,50 +230,28 @@ function IncidenceFlashLayer({
     resize();
     project();
 
-    let raf = 0;
-    let detach = () => {};
-
-    if (reduceMotion) {
-      const redraw = () => {
-        if (dirtyRef.current) project();
-        draw(0);
-      };
+    const redraw = () => {
+      if (dirtyRef.current) project();
+      draw();
+    };
+    const hide = () => {
+      canvas.style.visibility = "hidden";
+    };
+    const show = () => {
+      canvas.style.visibility = "visible";
+      dirtyRef.current = true;
       redraw();
-      map.on("move zoom viewreset resize", redraw);
-      detach = () => map.off("move zoom viewreset resize", redraw);
-    } else {
-      const markDirty = () => {
-        dirtyRef.current = true;
-      };
-      const onResize = () => resize();
-      const hide = () => {
-        canvas.style.visibility = "hidden";
-      };
-      const show = () => {
-        canvas.style.visibility = "visible";
-        dirtyRef.current = true;
-      };
-      map.on("move viewreset", markDirty);
-      map.on("resize", onResize);
-      map.on("zoomstart", hide);
-      map.on("zoomend", show);
-      const loop = (now: number) => {
-        if (dirtyRef.current) project();
-        draw(now / 1000);
-        raf = requestAnimationFrame(loop);
-      };
-      raf = requestAnimationFrame(loop);
-      detach = () => {
-        map.off("move viewreset", markDirty);
-        map.off("resize", onResize);
-        map.off("zoomstart", hide);
-        map.off("zoomend", show);
-      };
-    }
+    };
+
+    redraw();
+    map.on("move zoom viewreset resize", redraw);
+    map.on("zoomstart", hide);
+    map.on("zoomend", show);
 
     return () => {
-      cancelAnimationFrame(raf);
-      detach();
+      map.off("move zoom viewreset resize", redraw);
+      map.off("zoomstart", hide);
+      map.off("zoomend", show);
       container.removeChild(canvas);
     };
   }, [map]);
