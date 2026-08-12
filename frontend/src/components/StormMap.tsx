@@ -228,10 +228,9 @@ function IncidenceFlashLayer({
     }
 
     resize();
-    project();
 
     const redraw = () => {
-      if (dirtyRef.current) project();
+      project();
       draw();
     };
     const hide = () => {
@@ -239,7 +238,6 @@ function IncidenceFlashLayer({
     };
     const show = () => {
       canvas.style.visibility = "visible";
-      dirtyRef.current = true;
       redraw();
     };
 
@@ -254,7 +252,7 @@ function IncidenceFlashLayer({
       map.off("zoomend", show);
       container.removeChild(canvas);
     };
-  }, [map]);
+  }, [map, userLat, userLon, userCriticalRadiusKm, userAlertRadiusKm, sites]);
 
   return null;
 }
