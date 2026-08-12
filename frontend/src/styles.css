@@ -2655,6 +2655,273 @@ h1, h2, h3, h4 {
   color: var(--ink);
 }
 
+/* Nota de que kA e CG/IC são estimativas ilustrativas (não medidas pelo GLM) */
+.estimate-note {
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: var(--ink-mute);
+  margin: 10px 0 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--line);
+}
+
+.estimate-note strong {
+  color: var(--ink-soft);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   GAVETA DE LOCAIS DE MONITORAMENTO (monitor) + hambúrguer
+   ═══════════════════════════════════════════════════════════════════ */
+.open-locations-btn {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  background: #0284c7;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+.open-locations-btn:hover {
+  background: #0369a1;
+}
+
+.locations-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 8, 23, 0.45);
+  z-index: 1400;
+}
+
+.locations-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 400px;
+  max-width: 92vw;
+  background: var(--bg-elev);
+  border-left: 1px solid var(--line);
+  box-shadow: -14px 0 44px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(14px);
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  z-index: 1500;
+  display: flex;
+  flex-direction: column;
+}
+.locations-drawer--open {
+  transform: translateX(0);
+}
+
+.locations-drawer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+}
+.locations-drawer-header h2 {
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0;
+  color: var(--ink);
+}
+.locations-count {
+  font-size: 12px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.locations-drawer-body {
+  padding: 16px 18px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.locations-notice {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  background: var(--watch-bg);
+  border: 1px solid var(--watch-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin: 0;
+}
+.locations-notice code {
+  background: var(--chip);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 11px;
+}
+
+.locations-io {
+  display: flex;
+  gap: 8px;
+}
+.loc-error {
+  color: var(--alert);
+  font-size: 12px;
+  margin: -8px 0 0;
+}
+
+.loc-btn {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+.loc-btn--primary {
+  background: var(--accent);
+  color: #fff;
+  width: 100%;
+}
+.loc-btn--primary:hover:not(:disabled) {
+  background: var(--accent-bright);
+}
+.loc-btn--primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.loc-btn--ghost {
+  flex: 1;
+  background: var(--chip);
+  color: var(--ink);
+  border-color: var(--line);
+  font-size: 12px;
+  padding: 8px 10px;
+}
+.loc-btn--ghost:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+.loc-btn--ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.locations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.loc-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--panel);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.loc-card--sel {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+.loc-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.loc-card-top strong {
+  font-size: 14px;
+  color: var(--ink);
+}
+.loc-remove {
+  background: transparent;
+  border: none;
+  color: var(--ink-mute);
+  cursor: pointer;
+  padding: 2px;
+  display: inline-flex;
+}
+.loc-remove:hover {
+  color: var(--alert);
+}
+.loc-card-addr {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+.loc-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--ink-mute);
+  font-weight: 600;
+}
+
+.loc-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+}
+.loc-form h3,
+.locations-report h3 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--ink);
+}
+.loc-form label,
+.loc-form-row label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.loc-form input {
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+.loc-form input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.loc-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+
+.locations-report {
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  margin-top: auto;
+}
+
+@media (max-width: 560px) {
+  .locations-drawer {
+    width: 100vw;
+    max-width: 100vw;
+  }
+  .loc-form-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    HERO STORM-NIGHT — banner de duas colunas (visual da capa)
    ═══════════════════════════════════════════════════════════════════ */

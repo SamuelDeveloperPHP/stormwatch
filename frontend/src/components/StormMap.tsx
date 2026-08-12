@@ -2,6 +2,7 @@ import { MapContainer, TileLayer, Circle, Marker, Popup, useMap } from "react-le
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import type { MonitorSnapshot, Strike, StrikeFilter } from "../types.ts";
+import type { MonitorSite } from "../locations.ts";
 import { BoltIcon, CloudIcon } from "./ui-icons.tsx";
 
 // Corrige o ícone padrão do Leaflet (quebra com bundlers se não apontarmos a URL).
@@ -339,9 +340,11 @@ interface Props {
   snapshot: MonitorSnapshot | null;
   filter?: StrikeFilter;
   theme?: "dark" | "light";
+  sites?: MonitorSite[];
+  selectedSiteId?: string | null;
 }
 
-export default function StormMap({ snapshot, filter = "all", theme = "dark" }: Props) {
+export default function StormMap({ snapshot, filter = "all", theme = "dark", sites = [] }: Props) {
   const center: [number, number] = snapshot
     ? [snapshot.location.lat, snapshot.location.lon]
     : [-25.5306, -49.2939];
@@ -381,7 +384,6 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark" }: P
           url={tileUrl}
         />
 
-
         <IncidenceFlashLayer points={snapshot?.regionStrikes ?? []} />
 
         <RadarSweepLayer center={center} strikes={filteredStrikes} radiusKm={radiusKm} />
@@ -389,6 +391,53 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark" }: P
         <Marker position={center} icon={markerIcon}>
           <Popup>{snapshot?.location.label ?? "Local monitorado"}</Popup>
         </Marker>
+
+        {/* Marcadores e Círculos de Geofencing para todos os canteiros cadastrados */}
+        {sites.map((site) => (
+          <div key={site.id}>
+            <Marker position={[site.lat, site.lon]} icon={markerIcon}>
+              <Popup>
+                <div style={{ padding: 4 }}>
+                  <strong>📍 {site.name}</strong> ({site.category || "Obra"})
+                  {site.address && <div style={{ fontSize: 11, color: "#64748b" }}>{site.address}</div>}
+                  <div style={{ fontSize: 11, marginTop: 4 }}>
+                    🔴 Raio Crítico: <strong>{site.criticalRadiusKm} km</strong> | 🟠 Alerta: <strong>{site.alertRadiusKm} km</strong>
+                  </div>
+                  {site.responsibleName && (
+                    <div style={{ fontSize: 11, marginTop: 2 }}>
+                      👤 Responsável: <strong>{site.responsibleName}</strong> {site.managerPhone && `(${site.managerPhone})`}
+                    </div>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+
+            {/* Círculo de Raio Crítico (Vermelho) */}
+            <Circle
+              center={[site.lat, site.lon]}
+              radius={site.criticalRadiusKm * 1000}
+              pathOptions={{
+                color: "#ef4444",
+                fillColor: "#ef4444",
+                fillOpacity: 0.1,
+                weight: 2,
+              }}
+            />
+
+            {/* Círculo de Raio de Alerta (Laranja Pontilhado) */}
+            <Circle
+              center={[site.lat, site.lon]}
+              radius={site.alertRadiusKm * 1000}
+              pathOptions={{
+                color: "#f59e0b",
+                fillColor: "#f59e0b",
+                fillOpacity: 0.05,
+                weight: 1.5,
+                dashArray: "4, 6",
+              }}
+            />
+          </div>
+        ))}
 
         {rings.map((km) => (
           <Circle
@@ -437,7 +486,7 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark" }: P
                 ) : (
                   <><CloudIcon size={13} style={{ marginRight: 3 }} />intra-nuvem (IC)</>
                 )}
-                {amp > 0 ? <> <br />Intensidade: <strong>{amp} kA</strong></> : null}
+                {amp > 0 ? <> <br />Intensidade (est.): <strong>~{amp} kA</strong></> : null}
               </Popup>
             </Marker>
           );
@@ -483,7 +532,7 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark" }: P
           Raios América do Sul (satélite ao vivo)
         </div>
         <div className="legend-row" style={{ color: "var(--ink-mute)", fontSize: 11 }}>
-          Tamanho do marcador de raio indica a intensidade em kA.
+          O tamanho do marcador segue a intensidade (kA). Intensidade e tipo (CG/IC) são estimativas ilustrativas — não medidas pelo GLM.
         </div>
       </div>
     </div>
