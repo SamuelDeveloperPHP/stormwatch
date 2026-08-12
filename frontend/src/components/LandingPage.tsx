@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Forecast, MonitorSnapshot } from "../types.ts";
 import HourlyForecastWidget from "./HourlyForecastWidget.tsx";
+import HeroStormArt from "./HeroStormArt.tsx";
 import { CraneIcon, StageEventsIcon, IndustryPortIcon } from "./Icons.tsx";
 import {
   ConditionIcon,
@@ -78,25 +79,49 @@ export default function LandingPage({
         </button>
       </nav>
 
-      {/* Hero Section Header */}
+      {/* Hero Section Header — banner storm-night (visual da capa) */}
       <header className="hero-section">
-        <div className="hero-badge">
-          <span className="hero-pulse" /> SATÉLITE NOAA GOES-19 EM TEMPO REAL
-        </div>
-        <h1 className="hero-title">
-          Prevenção Meteorológica de <br></br><span className="text-gradient">Alta Precisão</span>
-        </h1>
-        <p className="hero-subtitle">
-          Monitore descargas atmosféricas em tempo real, proteja suas equipes no campo,
-          automatize alertas de paralisação e gere laudos de força maior.
-        </p>
-        <div className="hero-cta-group">
-          <button className="btn-hero-primary" onClick={onOpenApp}>
-            <BoltIcon size={15} style={{ marginRight: 6 }} />Acessar Monitor Gratuito
-          </button>
-          <button className="btn-hero-secondary" onClick={scrollToPricing}>
-            <BriefcaseIcon size={15} style={{ marginRight: 7 }} />Ver Planos B2B para Empresas
-          </button>
+        <div className="hero-inner">
+          <div className="hero-copy">
+            <div className="hero-badge">
+              <span className="hero-pulse" /> SATÉLITE NOAA GOES-19 EM TEMPO REAL
+            </div>
+            <h1 className="hero-title">
+              Prevenção meteorológica de <span className="text-gradient">alta precisão</span>
+            </h1>
+            <p className="hero-subtitle">
+              Monitore descargas atmosféricas em tempo real, proteja suas equipes no
+              campo, automatize alertas de paralisação e gere laudos de força maior.
+            </p>
+            <div className="hero-cta-group">
+              <button className="btn-hero-primary" onClick={onOpenApp}>
+                <BoltIcon size={15} style={{ marginRight: 6 }} />Acessar Monitor Gratuito
+              </button>
+              <button className="btn-hero-secondary" onClick={scrollToPricing}>
+                <BriefcaseIcon size={15} style={{ marginRight: 7 }} />Ver Planos B2B para Empresas
+              </button>
+            </div>
+
+            <div className="hero-feature-chips">
+              <span className="hero-chip"><span className="chip-dot" style={{ background: "#38bdf8" }} />NOAA GOES-19</span>
+              <span className="hero-chip"><span className="chip-dot" style={{ background: "#22c55e" }} />Alertas WhatsApp</span>
+              <span className="hero-chip"><span className="chip-dot" style={{ background: "#f59e0b" }} />NR-18</span>
+              <span className="hero-chip"><span className="chip-dot" style={{ background: "#a78bfa" }} />Laudo PDF</span>
+            </div>
+
+            <div className="hero-status-pills">
+              <span className="hero-pill hero-pill--stop">
+                <StopIcon size={14} style={{ marginRight: 6 }} />PARAR · raio ≤ 8 km
+              </span>
+              <span className="hero-pill hero-pill--clear">
+                <ShieldCheckIcon size={14} style={{ marginRight: 6 }} />LIBERADO · tudo limpo 30 min
+              </span>
+            </div>
+          </div>
+
+          <div className="hero-illustration">
+            <HeroStormArt />
+          </div>
         </div>
 
         {/* Live Metrics Teaser Bar (Integrada elegantemente ao Hero) */}
