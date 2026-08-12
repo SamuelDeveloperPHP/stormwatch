@@ -26,7 +26,11 @@ const userMarkerIcon = L.divIcon({
   popupAnchor: [0, -38],
 });
 
-type StrikeZone = "critical" | "alert" | "outer";
+interface StrikeAnalysis {
+  zone: "critical" | "alert" | "outer";
+  matchedSiteName?: string;
+  distToSiteKm?: number;
+}
 
 function getStrikeZone(
   s: Strike,
@@ -35,24 +39,32 @@ function getStrikeZone(
   userCriticalRadiusKm: number,
   userAlertRadiusKm: number,
   sites: MonitorSite[]
-): StrikeZone {
-  // 1. Verifica Raio Crítico do Usuário ou de qualquer canteiro cadastrado
-  if (s.distanceKm <= userCriticalRadiusKm) return "critical";
+): StrikeAnalysis {
+  // 1. Verifica Raio Crítico dos canteiros cadastrados
   for (const site of sites) {
-    if (getDistanceKm(s.lat, s.lon, site.lat, site.lon) <= site.criticalRadiusKm) {
-      return "critical";
+    const dist = getDistanceKm(s.lat, s.lon, site.lat, site.lon);
+    if (dist <= site.criticalRadiusKm) {
+      return { zone: "critical", matchedSiteName: site.name, distToSiteKm: dist };
     }
   }
-
-  // 2. Verifica Raio de Alerta do Usuário ou de qualquer canteiro cadastrado
-  if (s.distanceKm <= userAlertRadiusKm) return "alert";
-  for (const site of sites) {
-    if (getDistanceKm(s.lat, s.lon, site.lat, site.lon) <= site.alertRadiusKm) {
-      return "alert";
-    }
+  // Verifica Raio Crítico do Usuário
+  if (s.distanceKm <= userCriticalRadiusKm) {
+    return { zone: "critical", matchedSiteName: "Sua Geolocalização", distToSiteKm: s.distanceKm };
   }
 
-  return "outer";
+  // 2. Verifica Raio de Alerta dos canteiros cadastrados
+  for (const site of sites) {
+    const dist = getDistanceKm(s.lat, s.lon, site.lat, site.lon);
+    if (dist <= site.alertRadiusKm) {
+      return { zone: "alert", matchedSiteName: site.name, distToSiteKm: dist };
+    }
+  }
+  // Verifica Raio de Alerta do Usuário
+  if (s.distanceKm <= userAlertRadiusKm) {
+    return { zone: "alert", matchedSiteName: "Sua Geolocalização", distToSiteKm: s.distanceKm };
+  }
+
+  return { zone: "outer" };
 }
 
 // Ícone de RELÂMPAGO para cada raio (marcação no mapa).
@@ -552,7 +564,7 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
           const userLon = defaultCenter[1];
           const userAlertRadiusKm = Math.max(radiusKm, 15);
           
-          const zone = getStrikeZone(s, userLat, userLon, radiusKm, userAlertRadiusKm, sites);
+          const analysis = getStrikeZone(s, userLat, userLon, radiusKm, userAlertRadiusKm, sites);
           const when = new Date(s.timestamp).toLocaleTimeString("pt-BR", {
             hour: "2-digit",
             minute: "2-digit",
@@ -560,14 +572,18 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
           const amp = Math.abs(s.peakAmpKa || 0);
 
           return (
-            <Marker key={s.id} position={[s.lat, s.lon]} icon={boltIcon(zone, amp)}>
+            <Marker key={s.id} position={[s.lat, s.lon]} icon={boltIcon(analysis.zone, amp)}>
               <Popup>
                 <strong>{s.distanceKm} km</strong> · {when}
-                {zone === "critical" && (
-                  <div style={{ color: "#ef4444", fontWeight: 700, fontSize: 11 }}>🔴 Raio no Raio Crítico do Local!</div>
+                {analysis.zone === "critical" && (
+                  <div style={{ color: "#ef4444", fontWeight: 700, fontSize: 11, marginTop: 2 }}>
+                    🔴 Raio Crítico no local <strong>"{analysis.matchedSiteName}"</strong> ({analysis.distToSiteKm?.toFixed(1)} km)
+                  </div>
                 )}
-                {zone === "alert" && (
-                  <div style={{ color: "#eab308", fontWeight: 700, fontSize: 11 }}>⚡ Raio no Raio de Alerta do Local!</div>
+                {analysis.zone === "alert" && (
+                  <div style={{ color: "#eab308", fontWeight: 700, fontSize: 11, marginTop: 2 }}>
+                    ⚡ Raio de Alerta no local <strong>"{analysis.matchedSiteName}"</strong> ({analysis.distToSiteKm?.toFixed(1)} km)
+                  </div>
                 )}
                 <br />
                 Tipo:{" "}
