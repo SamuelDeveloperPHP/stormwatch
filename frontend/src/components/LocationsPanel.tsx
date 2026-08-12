@@ -119,38 +119,91 @@ export default function LocationsPanel({
     }
   };
 
-  const handleAdd = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || atLimit) return;
-    const parsedLat = parseFloat(latVal) || -25.4411;
-    const parsedLon = parseFloat(lonVal) || -49.2782;
+  const [editingSiteId, setEditingSiteId] = useState<string | null>(null);
 
-    const site: MonitorSite = {
-      id: `site-${Date.now()}`,
-      name: name.trim(),
-      address: address.trim(),
-      lat: parsedLat,
-      lon: parsedLon,
-      criticalRadiusKm: parseInt(critical) || 8,
-      alertRadiusKm: parseInt(alert) || 15,
-      peopleCount: parseInt(people) || 0,
-      category,
-      responsibleName: responsibleName.trim(),
-      managerPhone: managerPhone.trim(),
-    };
-    onSitesChange([...sites, site]);
-    onSelect(site.id);
+  const handleStartEdit = (site: MonitorSite) => {
+    setEditingSiteId(site.id);
+    setName(site.name);
+    setAddress(site.address || "");
+    setCategory(site.category || "Aeroporto");
+    setResponsibleName(site.responsibleName || "");
+    setManagerPhone(site.managerPhone || "");
+    setLatVal(site.lat.toFixed(5));
+    setLonVal(site.lon.toFixed(5));
+    setCritical(site.criticalRadiusKm.toString());
+    setAlert(site.alertRadiusKm.toString());
+    setPeople(site.peopleCount.toString());
+    setGeoSuccessMsg(null);
+    setGeoErrorMsg(null);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSiteId(null);
     setName("");
     setAddress("");
     setResponsibleName("");
     setManagerPhone("");
+    setLatVal("-25.4411");
+    setLonVal("-49.2782");
+    setCritical("8");
+    setAlert("15");
     setPeople("0");
     setGeoSuccessMsg(null);
     setGeoErrorMsg(null);
   };
 
+  const handleAddOrUpdate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name.trim()) return;
+    const parsedLat = parseFloat(latVal) || -25.4411;
+    const parsedLon = parseFloat(lonVal) || -49.2782;
+
+    if (editingSiteId) {
+      const updated = sites.map((s) => {
+        if (s.id === editingSiteId) {
+          return {
+            ...s,
+            name: name.trim(),
+            address: address.trim(),
+            lat: parsedLat,
+            lon: parsedLon,
+            criticalRadiusKm: parseInt(critical) || 8,
+            alertRadiusKm: parseInt(alert) || 15,
+            peopleCount: parseInt(people) || 0,
+            category,
+            responsibleName: responsibleName.trim(),
+            managerPhone: managerPhone.trim(),
+          };
+        }
+        return s;
+      });
+      onSitesChange(updated);
+      onSelect(editingSiteId);
+      handleCancelEdit();
+    } else {
+      if (atLimit) return;
+      const site: MonitorSite = {
+        id: `site-${Date.now()}`,
+        name: name.trim(),
+        address: address.trim(),
+        lat: parsedLat,
+        lon: parsedLon,
+        criticalRadiusKm: parseInt(critical) || 8,
+        alertRadiusKm: parseInt(alert) || 15,
+        peopleCount: parseInt(people) || 0,
+        category,
+        responsibleName: responsibleName.trim(),
+        managerPhone: managerPhone.trim(),
+      };
+      onSitesChange([...sites, site]);
+      onSelect(site.id);
+      handleCancelEdit();
+    }
+  };
+
   const handleRemove = (id: string) => {
     onSitesChange(sites.filter((s) => s.id !== id));
+    if (editingSiteId === id) handleCancelEdit();
   };
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -238,16 +291,29 @@ export default function LocationsPanel({
                       </span>
                       <strong>{site.name}</strong>
                     </div>
-                    <button
-                      className="loc-remove"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRemove(site.id);
-                      }}
-                      aria-label="Remover local"
-                    >
-                      <CloseIcon size={13} />
-                    </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <button
+                        type="button"
+                        style={{ background: "transparent", border: "none", cursor: "pointer", fontSize: 12, padding: "2px 6px", color: "#0284c7" }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleStartEdit(site);
+                        }}
+                        title="Editar informações deste local"
+                      >
+                        ✏️ Editar
+                      </button>
+                      <button
+                        className="loc-remove"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRemove(site.id);
+                        }}
+                        aria-label="Remover local"
+                      >
+                        <CloseIcon size={13} />
+                      </button>
+                    </div>
                   </div>
                   {site.address && <div className="loc-card-addr">📍 {site.address}</div>}
                   <div style={{ fontSize: 11, color: "var(--ink-soft)", margin: "4px 0" }}>
@@ -268,10 +334,10 @@ export default function LocationsPanel({
             })}
           </div>
 
-          {/* Formulário de novo local com Geocoding */}
-          {!atLimit ? (
-            <form className="loc-form" onSubmit={handleAdd}>
-              <h3>➕ Adicionar local de monitoramento</h3>
+          {/* Formulário de novo local / Edição com Geocoding */}
+          {(!atLimit || editingSiteId) ? (
+            <form className="loc-form" onSubmit={handleAddOrUpdate}>
+              <h3>{editingSiteId ? "✏️ Editar Local de Monitoramento" : "➕ Adicionar local de monitoramento"}</h3>
               
               <label>
                 Categoria do Local
@@ -371,9 +437,16 @@ export default function LocationsPanel({
                 </label>
               </div>
 
-              <button type="submit" className="loc-btn loc-btn--primary">
-                + Salvar e Monitorar este Local
-              </button>
+              <div style={{ display: "flex", gap: 10, marginTop: 8 }}>
+                <button type="submit" className="loc-btn loc-btn--primary" style={{ flex: 1 }}>
+                  {editingSiteId ? "💾 Salvar Alterações" : "+ Salvar e Monitorar este Local"}
+                </button>
+                {editingSiteId && (
+                  <button type="button" onClick={handleCancelEdit} className="loc-btn loc-btn--ghost">
+                    Cancelar
+                  </button>
+                )}
+              </div>
             </form>
           ) : (
             <p className="muted" style={{ fontSize: 13 }}>
