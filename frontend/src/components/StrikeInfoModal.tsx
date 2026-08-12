@@ -26,6 +26,16 @@ export default function StrikeInfoModal({ isOpen, onClose }: StrikeInfoModalProp
         </div>
 
         <div className="modal-body info-modal-body">
+          <p
+            className="estimate-note"
+            style={{ marginTop: 0, borderTop: "none", background: "var(--watch-bg)", border: "1px solid var(--watch-border)", borderRadius: 8, padding: "10px 12px" }}
+          >
+            ⚠️ Este guia é educativo. No StormWatch, a <strong>amperagem (kA)</strong> e a
+            classificação <strong>Nuvem-Solo (CG) / Intra-Nuvem (IC)</strong> são{" "}
+            <strong>estimativas ilustrativas</strong>: o satélite GLM detecta a ocorrência e a
+            localização das descargas (raio total), mas não mede amperagem nem separa CG/IC.
+          </p>
+
           {/* Seção 1: Tipos de Descargas Elétricas */}
           <div className="info-section">
             <h3>1. Tipos de Raios</h3>

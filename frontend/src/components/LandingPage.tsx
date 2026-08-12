@@ -343,8 +343,8 @@ export default function LandingPage({
               Monitoramento de pátios de estocagem, linhas de transmissão de alta tensão e pátios de conteineres contra raios destrutivos.
             </p>
             <ul>
-              <li><CheckIcon />Análise de pico de amperagem em kA</li>
-              <li><CheckIcon />Separação de raios Nuvem-Solo (CG)</li>
+              <li><CheckIcon />Densidade e proximidade das descargas</li>
+              <li><CheckIcon />Detecção de raio total via satélite (GLM)</li>
               <li><CheckIcon />Relatórios de telemetria de paralisação</li>
             </ul>
           </div>
@@ -371,7 +371,7 @@ export default function LandingPage({
             <ul className="plan-features">
               <li><CheckIcon />Feed ao vivo NOAA GOES-19 GLM</li>
               <li><CheckIcon />Mapa interativo de radar (120 km)</li>
-              <li><CheckIcon />Análise básica de amperagem (kA)</li>
+              <li><CheckIcon />Contagem e proximidade das descargas</li>
               <li><CheckIcon />Previsão do tempo Open-Meteo</li>
               <li className="disabled"><XIcon />Alertas automáticos via WhatsApp/SMS</li>
               <li className="disabled"><XIcon />Relatório de telemetria em PDF</li>

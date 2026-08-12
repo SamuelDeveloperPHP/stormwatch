@@ -5,10 +5,16 @@ import StormMap from "./components/StormMap.tsx";
 import { ForecastPanel, IntensitySummaryPanel, StatusPanel, StrikeList } from "./components/Panels.tsx";
 import TermsModal from "./components/TermsModal.tsx";
 import StrikeInfoModal from "./components/StrikeInfoModal.tsx";
-import GuideModal from "./components/GuideModal.tsx";
 import LandingPage from "./components/LandingPage.tsx";
-import B2BModal from "./components/B2BModal.tsx";
-import { INITIAL_B2B_SITES, type B2BSite, generateLaudoPDF } from "./b2bModules.ts";
+import LocationsPanel from "./components/LocationsPanel.tsx";
+import { generateLaudoPDF } from "./b2bModules.ts";
+import {
+  type MonitorSite,
+  loadSites,
+  saveSites,
+  canGenerateReportToday,
+  markReportGenerated,
+} from "./locations.ts";
 import { HomeIcon, SunIcon, MoonIcon } from "./components/ui-icons.tsx";
 
 const POLL_MS = 30000; // a cada 30s (casa com o polling da NOAA no ingestor)
@@ -142,9 +148,25 @@ export default function App() {
 
   const geoNote = GEO_NOTE[geo];
 
-  // Estado dos Módulos Pagos B2B
-  const [isB2BModalOpen, setIsB2BModalOpen] = useState(false);
-  const [selectedB2BSite, setSelectedB2BSite] = useState<B2BSite | null>(INITIAL_B2B_SITES[0]);
+  // Locais de monitoramento (até 3, salvos localmente) + gaveta lateral
+  const [sites, setSites] = useState<MonitorSite[]>(() => loadSites());
+  const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null);
+  const [isLocationsOpen, setIsLocationsOpen] = useState(false);
+  const [reportUsedToday, setReportUsedToday] = useState(() => !canGenerateReportToday());
+
+  useEffect(() => {
+    saveSites(sites);
+  }, [sites]);
+
+  const handleGenerateReport = (site: MonitorSite | null) => {
+    if (!canGenerateReportToday()) {
+      setReportUsedToday(true);
+      return;
+    }
+    generateLaudoPDF(snapshot, site ?? undefined);
+    markReportGenerated();
+    setReportUsedToday(true);
+  };
 
   // Estado para alternar entre Mapa e Painéis no celular (mobile)
   const [mobileTab, setMobileTab] = useState<"map" | "panels">("map");
@@ -201,11 +223,11 @@ export default function App() {
         <div className="topbar-actions">
           <button
             className="theme-toggle-btn"
-            onClick={() => setIsB2BModalOpen(true)}
+            onClick={() => setIsLocationsOpen((v) => !v)}
             style={{ background: "#0284c7", color: "#ffffff", border: "none", fontWeight: 700 }}
-            title="Módulos Pagos B2B (Geofencing, WhatsApp e Relatórios)"
+            title="Locais de monitoramento"
           >
-            ⚡ Módulos B2B Enterprise
+            ☰ Locais
           </button>
           <button
             className="theme-toggle-btn"
@@ -266,20 +288,9 @@ export default function App() {
         </div>
 
         <div className="sidebar-col sidebar-col2">
-          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-            <button
-              onClick={() => setIsB2BModalOpen(true)}
-              style={{ flex: 1, padding: "10px 12px", background: "#0284c7", color: "#fff", border: "none", borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer" }}
-            >
-              ⚡ Módulos B2B Enterprise
-            </button>
-            <button
-              onClick={() => generateLaudoPDF(snapshot, selectedB2BSite || undefined)}
-              style={{ flex: 1, padding: "10px 12px", background: "var(--chip)", color: "var(--ink)", border: "1px solid var(--line)", borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer" }}
-            >
-              📄 Emitir Relatório PDF
-            </button>
-          </div>
+          <button className="open-locations-btn" onClick={() => setIsLocationsOpen(true)}>
+            ☰ Locais de Monitoramento & Relatório
+          </button>
 
           <StrikeList
             snapshot={snapshot}
@@ -323,7 +334,7 @@ export default function App() {
         </div>
       </aside>
 
-      <StormMap snapshot={snapshot} filter={strikeFilter} theme={theme} />
+      <StormMap snapshot={snapshot} filter={strikeFilter} theme={theme} sites={sites} selectedSiteId={selectedSiteId} />
 
       <TermsModal
         isOpen={isTermsOpen}
@@ -336,12 +347,15 @@ export default function App() {
         onClose={() => setIsInfoOpen(false)}
       />
 
-      <B2BModal
-        isOpen={isB2BModalOpen}
-        onClose={() => setIsB2BModalOpen(false)}
-        snapshot={snapshot}
-        selectedSite={selectedB2BSite}
-        onSelectSite={setSelectedB2BSite}
+      <LocationsPanel
+        isOpen={isLocationsOpen}
+        onClose={() => setIsLocationsOpen(false)}
+        sites={sites}
+        onSitesChange={setSites}
+        selectedId={selectedSiteId}
+        onSelect={setSelectedSiteId}
+        onGenerateReport={handleGenerateReport}
+        reportAvailable={!reportUsedToday}
       />
     </div>
   );

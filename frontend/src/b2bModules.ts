@@ -1,103 +1,14 @@
 import type { MonitorSnapshot } from "./types.ts";
 
-export interface B2BSite {
-  id: string;
-  name: string;
-  category: "Obra" | "Evento" | "Porto / Indústria";
-  address: string;
-  lat: number;
-  lon: number;
-  criticalRadiusKm: number; // Ex: 8 km
-  alertRadiusKm: number; // Ex: 15 km
-  workersCount: number;
-  managerPhone: string;
-  activeStatus: "LIBERADO" | "ATENCAO" | "PARALISADO_NR18";
-  allClearTimerSec: number;
-}
-
-export const INITIAL_B2B_SITES: B2BSite[] = [
-  {
-    id: "site-01",
-    name: "Obra Torre Horizon - Canteiro 01",
-    category: "Obra",
-    address: "Av. Sete de Setembro, 4200 - Batel, Curitiba - PR",
-    lat: -25.4411,
-    lon: -49.2782,
-    criticalRadiusKm: 8,
-    alertRadiusKm: 15,
-    workersCount: 45,
-    managerPhone: "5541988885871",
-    activeStatus: "LIBERADO",
-    allClearTimerSec: 0,
-  },
-  {
-    id: "site-02",
-    name: "Arena Eventos Ao Ar Livre - Palco Principal",
-    category: "Evento",
-    address: "Parque Barigui - Curitiba - PR",
-    lat: -25.4262,
-    lon: -49.3086,
-    criticalRadiusKm: 8,
-    alertRadiusKm: 15,
-    workersCount: 120,
-    managerPhone: "5541988885871",
-    activeStatus: "LIBERADO",
-    allClearTimerSec: 0,
-  },
-  {
-    id: "site-03",
-    name: "Terminal Logístico Portuário - Pátio 03",
-    category: "Porto / Indústria",
-    address: "Porto de Paranaguá - PR",
-    lat: -25.5033,
-    lon: -48.5133,
-    criticalRadiusKm: 8,
-    alertRadiusKm: 15,
-    workersCount: 80,
-    managerPhone: "5541988885871",
-    activeStatus: "LIBERADO",
-    allClearTimerSec: 0,
-  },
-];
-
 /**
- * Função para disparar a simulação de mensagem via WhatsApp
+ * Gera e baixa o Relatório de Telemetria em PDF (uso geral).
+ * Quando `site` é omitido, usa a localização atual do monitor.
  */
-export function sendWhatsAppAlertSimulation(site: B2BSite, messageType: "WARNING" | "CRITICAL" | "ALL_CLEAR") {
-  let text = "";
-  const phone = site.managerPhone.replace(/\D/g, "");
-
-  if (messageType === "CRITICAL") {
-    text = `🚨 *STORMWATCH - ALERTA DE RAIO (RAIO CRÍTICO)*\n\n` +
-      `*Local:* ${site.name}\n` +
-      `*Status:* ⚡ Raio detectado dentro do raio crítico (${site.criticalRadiusKm} km)\n` +
-      `*Recomendação:* Considerar a paralisação imediata de trabalhos em gruas, andaimes e estruturas metálicas.\n` +
-      `*Fonte:* NOAA GOES-19 GLM (satélite)\n` +
-      `*Tudo Limpo:* contagem de 30 min inicia após a última descarga.\n\n` +
-      `_Ferramenta de apoio à decisão. A decisão final é do responsável pelo local._`;
-  } else if (messageType === "WARNING") {
-    text = `⚠️ *STORMWATCH - ATENÇÃO*\n\n` +
-      `*Local:* ${site.name}\n` +
-      `*Status:* Tempestade se aproximando (raio a menos de ${site.alertRadiusKm} km)\n` +
-      `*Recomendação:* Manter equipes de prontidão para eventual evacuação preventiva.\n\n` +
-      `_Ferramenta de apoio à decisão. A decisão final é do responsável pelo local._`;
-  } else {
-    text = `✅ *STORMWATCH - TUDO LIMPO (SUGERIDO)*\n\n` +
-      `*Local:* ${site.name}\n` +
-      `*Status:* Nenhuma descarga detectada nos últimos 30 minutos.\n` +
-      `*Recomendação:* Condições sugerem retomada — confirme a situação no local antes de liberar.\n\n` +
-      `_Ferramenta de apoio à decisão. A decisão final é do responsável pelo local._`;
-  }
-
-  const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
-  window.open(url, "_blank");
-}
-
-/**
- * Gera e baixa o Laudo Meteorológico em PDF para Força Maior
- */
-export function generateLaudoPDF(snapshot: MonitorSnapshot | null, site?: B2BSite) {
-  const targetSiteName = site ? site.name : "Canteiro de Obras & Eventos Corporativo";
+export function generateLaudoPDF(
+  snapshot: MonitorSnapshot | null,
+  site?: { name: string; address: string }
+) {
+  const targetSiteName = site ? site.name : snapshot?.location.label || "Local monitorado";
   const targetAddress = site ? site.address : "Curitiba, PR - Brasil";
   const now = new Date();
   const reportId = `SW-REL-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, "0")}${now.getDate().toString().padStart(2, "0")}-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -286,7 +197,7 @@ export function generateLaudoPDF(snapshot: MonitorSnapshot | null, site?: B2BSit
           <th>ID</th>
           <th>Horário (BRT)</th>
           <th>Classificação</th>
-          <th>Amperagem (kA)</th>
+          <th>Amperagem est. (kA)</th>
           <th>Distância do Alvo</th>
           <th>Nível de Risco</th>
         </tr>

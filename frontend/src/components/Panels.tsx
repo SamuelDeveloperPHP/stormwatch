@@ -249,8 +249,8 @@ export function IntensitySummaryPanel({
 
       <div className="intensity-grid">
         <div className="metric-box">
-          <span className="metric-label">Pico Máximo</span>
-          <span className="metric-value">{maxAmp > 0 ? `${maxAmp.toFixed(0)} kA` : "—"}</span>
+          <span className="metric-label">Pico Máx. (est.)</span>
+          <span className="metric-value">{maxAmp > 0 ? `~${maxAmp.toFixed(0)} kA` : "—"}</span>
         </div>
         <div className="metric-box">
           <span className="metric-label">Frequência</span>
@@ -267,6 +267,10 @@ export function IntensitySummaryPanel({
           <div className="cg-ic-fill-cg" style={{ width: `${cgPercent}%` }} />
         </div>
       </div>
+
+      <p className="estimate-note">
+        Amperagem (kA) e classificação CG/IC são <strong>estimativas ilustrativas</strong> — não medidas pelo GLM. Frequência e contagem são dados reais.
+      </p>
     </div>
   );
 }
@@ -375,7 +379,7 @@ export function StrikeList({
           className={`filter-chip ${filter === "high_intensity" ? "filter-chip--active" : ""}`}
           onClick={() => onFilterChange("high_intensity")}
         >
-          &gt; 30 kA
+          &gt; 30 kA (est.)
         </button>
       </div>
 
@@ -410,7 +414,7 @@ export function StrikeList({
                   )} · {when}
                 </span>
                 {amp > 0 && (
-                  <span className={`amp-badge ${ampClass}`}>{amp} kA</span>
+                  <span className={`amp-badge ${ampClass}`} title="Estimativa ilustrativa — não medida pelo GLM">~{amp} kA</span>
                 )}
               </div>
             );
