@@ -247,7 +247,9 @@ function RadarSweepLayer({
 
       const [lat, lon] = centerRef.current;
       const c = map.latLngToContainerPoint([lat, lon]);
-      const north = map.latLngToContainerPoint([lat + MAX_KM / 111, lon]);
+      // Limita o comprimento da linha de radar ao raio específico do local (radiusKm)
+      const currentRadiusKm = radiusRef.current || 8;
+      const north = map.latLngToContainerPoint([lat + currentRadiusKm / 111, lon]);
       const rPx = Math.hypot(north.x - c.x, north.y - c.y);
 
       const theta = reduceMotion ? -Math.PI / 4 : ((now % PERIOD_MS) / PERIOD_MS) * Math.PI * 2;
@@ -268,11 +270,8 @@ function RadarSweepLayer({
         }
       }
 
-      const grad = ctx.createLinearGradient(c.x, c.y, tx(theta), ty(theta));
-      grad.addColorStop(0, "rgba(37, 99, 235, 0.95)");
-      grad.addColorStop(1, "rgba(37, 99, 235, 0.12)");
-      ctx.strokeStyle = grad;
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "#38bdf8";
       ctx.beginPath();
       ctx.moveTo(c.x, c.y);
       ctx.lineTo(tx(theta), ty(theta));
@@ -349,11 +348,21 @@ function RadarSweepLayer({
   return null;
 }
 
-function RecenterMap({ center }: { center: [number, number] }) {
+function RecenterMap({ selectedSiteId, sites }: { selectedSiteId?: string | null; sites: MonitorSite[] }) {
   const map = useMap();
+  const lastSelectedRef = useRef<string | null | undefined>(undefined);
+
   useEffect(() => {
-    map.flyTo(center, Math.max(map.getZoom(), 8), { duration: 1.2 });
-  }, [center, map]);
+    // Voo de recenteamento do mapa EXCLUSIVAMENTE quando o usuario seleciona um novo local
+    if (selectedSiteId && selectedSiteId !== lastSelectedRef.current) {
+      const site = sites.find((s) => s.id === selectedSiteId);
+      if (site) {
+        map.flyTo([site.lat, site.lon], Math.max(map.getZoom(), 9), { duration: 1.2 });
+      }
+    }
+    lastSelectedRef.current = selectedSiteId;
+  }, [selectedSiteId, sites, map]);
+
   return null;
 }
 
@@ -371,7 +380,7 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
     : [-25.5306, -49.2939];
 
   const selectedSite = sites.find((s) => s.id === selectedSiteId);
-  const activeCenter: [number, number] = selectedSite
+  const initialCenter: [number, number] = selectedSite
     ? [selectedSite.lat, selectedSite.lon]
     : defaultCenter;
 
@@ -403,8 +412,8 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
 
   return (
     <div className="map-wrap">
-      <MapContainer center={activeCenter} zoom={7} scrollWheelZoom>
-        <RecenterMap center={activeCenter} />
+      <MapContainer center={initialCenter} zoom={7} scrollWheelZoom>
+        <RecenterMap selectedSiteId={selectedSiteId} sites={sites} />
         <TileLayer
           key={theme}
           attribution={tileAttribution}
@@ -413,14 +422,14 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
 
         <IncidenceFlashLayer points={snapshot?.regionStrikes ?? []} />
 
-        {/* Varredura por Radar Sonar rotativo no centro ativo */}
-        <RadarSweepLayer center={activeCenter} strikes={filteredStrikes} radiusKm={radiusKm} />
+        {/* Varredura por Radar Sonar rotativo na Geolocalização do Usuário (linha limitada ao raio) */}
+        <RadarSweepLayer center={defaultCenter} strikes={filteredStrikes} radiusKm={radiusKm} />
 
         <Marker position={defaultCenter} icon={markerIcon}>
           <Popup>{snapshot?.location.label ?? "Sua Geolocalização Atual"}</Popup>
         </Marker>
 
-        {/* Marcadores e Círculos dos 2 Raios (Crítico e Alerta) para cada local cadastrado */}
+        {/* Marcadores, Círculos dos 2 Raios e Linha de Radar Independente para cada local cadastrado */}
         {sites.map((site) => (
           <div key={site.id}>
             <Marker position={[site.lat, site.lon]} icon={markerIcon}>
@@ -439,6 +448,13 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
                 </div>
               </Popup>
             </Marker>
+
+            {/* Varredura de Radar Sonar INDEPENDENTE por Local (linha limitada ao raio de alerta) */}
+            <RadarSweepLayer
+              center={[site.lat, site.lon]}
+              strikes={filteredStrikes}
+              radiusKm={site.alertRadiusKm}
+            />
 
             {/* Círculo de Raio Crítico (Vermelho) */}
             <Circle
