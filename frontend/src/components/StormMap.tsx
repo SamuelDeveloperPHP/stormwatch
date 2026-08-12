@@ -5,13 +5,25 @@ import type { MonitorSnapshot, Strike, StrikeFilter } from "../types.ts";
 import type { MonitorSite } from "../locations.ts";
 import { BoltIcon, CloudIcon } from "./ui-icons.tsx";
 
-// Corrige o ícone padrão do Leaflet (quebra com bundlers se não apontarmos a URL).
+// Ícone de Marcador Padrão (Azul) para Canteiros / Locais cadastrados.
 const markerIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
   iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
   shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
+});
+
+// Ícone VERDE vibrante exclusivo para a Geolocalização do Usuário
+const userMarkerIcon = L.divIcon({
+  className: "user-green-marker",
+  html: `<svg viewBox="0 0 24 36" width="28" height="42" aria-hidden="true" style="filter: drop-shadow(0 2px 8px rgba(16,185,129,0.7));">
+    <path d="M12 0C5.37 0 0 5.37 0 12c0 9 12 24 12 24s12-15 12-24c0-6.63-5.37-12-12-12zm0 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" fill="#10b981" stroke="#047857" stroke-width="1.2"/>
+    <circle cx="12" cy="12" r="4" fill="#ffffff"/>
+  </svg>`,
+  iconSize: [28, 42],
+  iconAnchor: [14, 42],
+  popupAnchor: [0, -38],
 });
 
 // Função utilitária para distância Haversine em km
@@ -422,12 +434,45 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
 
         <IncidenceFlashLayer points={snapshot?.regionStrikes ?? []} />
 
-        {/* Varredura por Radar Sonar rotativo na Geolocalização do Usuário (linha limitada ao raio) */}
-        <RadarSweepLayer center={defaultCenter} strikes={filteredStrikes} radiusKm={radiusKm} />
+        {/* Varredura por Radar Sonar rotativo na Geolocalização do Usuário (linha limitada ao raio de alerta) */}
+        <RadarSweepLayer center={defaultCenter} strikes={filteredStrikes} radiusKm={Math.max(radiusKm, 15)} />
 
-        <Marker position={defaultCenter} icon={markerIcon}>
-          <Popup>{snapshot?.location.label ?? "Sua Geolocalização Atual"}</Popup>
+        {/* Pino VERDE vibrante para a Geolocalização do Usuário */}
+        <Marker position={defaultCenter} icon={userMarkerIcon}>
+          <Popup>
+            <div style={{ padding: 4 }}>
+              <strong>🟢 {snapshot?.location.label ?? "Sua Geolocalização Atual"}</strong>
+              <div style={{ fontSize: 11, marginTop: 4 }}>
+                🔴 Raio Crítico: <strong>{radiusKm} km</strong> | 🟠 Alerta: <strong>{Math.max(radiusKm, 15)} km</strong>
+              </div>
+            </div>
+          </Popup>
         </Marker>
+
+        {/* 🔴 Raio Crítico da Geolocalização do Usuário */}
+        <Circle
+          center={defaultCenter}
+          radius={radiusKm * 1000}
+          pathOptions={{
+            color: "#ef4444",
+            fillColor: "#ef4444",
+            fillOpacity: 0.12,
+            weight: 2,
+          }}
+        />
+
+        {/* 🟠 Raio de Alerta da Geolocalização do Usuário */}
+        <Circle
+          center={defaultCenter}
+          radius={Math.max(radiusKm, 15) * 1000}
+          pathOptions={{
+            color: "#f59e0b",
+            fillColor: "#f59e0b",
+            fillOpacity: 0.05,
+            weight: 1.5,
+            dashArray: "4, 6",
+          }}
+        />
 
         {/* Marcadores, Círculos dos 2 Raios e Linha de Radar Independente para cada local cadastrado */}
         {sites.map((site) => (
@@ -483,34 +528,6 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
           </div>
         ))}
 
-        {/* Anéis de Radar Sonar da Geolocalização Padrão */}
-        {rings.map((km) => (
-          <Circle
-            key={`ref-${km}`}
-            center={defaultCenter}
-            radius={km * 1000}
-            pathOptions={{
-              color: ringColor,
-              weight: 1,
-              opacity: isLight ? 0.45 : 0.35,
-              fill: false,
-            }}
-          />
-        ))}
-
-        <Circle
-          center={defaultCenter}
-          radius={radiusKm * 1000}
-          pathOptions={{
-            color: ringColor,
-            weight: 2,
-            opacity: 0.9,
-            fill: true,
-            fillColor: isLight ? "#2563eb" : "#0ea5e9",
-            fillOpacity: isLight ? 0.08 : 0.12,
-          }}
-        />
-
         {/* Renderização de Raios no Mapa */}
         {filteredStrikes.map((s) => {
           const near = s.distanceKm <= radiusKm;
@@ -543,49 +560,54 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
         })}
       </MapContainer>
 
+      {/* Tabela de Legendas Atualizada */}
       <div className="legend">
         <div className="legend-row">
-          <span className="legend-ring" /> Anéis a cada {RING_STEP_KM} km (até {RING_MAX_KM} km)
+          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: "#10b981", border: "2px solid #047857", flex: "none" }} />
+          <strong>🟢 Geolocalização Atual do Usuário</strong>
         </div>
         <div className="legend-row">
-          <BoltGlyph color="#facc15" /> Raio detectado em canteiro / local monitorado
+          <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: "#0284c7", border: "2px solid #0369a1", flex: "none" }} />
+          <strong>📍 Canteiro / Local Monitorado</strong>
         </div>
         <div className="legend-row">
           <span
             className="legend-ring"
-            style={{ borderColor: "#38bdf8", borderWidth: 2 }}
+            style={{ borderColor: "#ef4444", borderWidth: 2, background: "rgba(239, 68, 68, 0.15)" }}
           />
-          Raio crítico de alerta ({radiusKm} km)
+          🔴 Raio Crítico (Segurança Operacional)
+        </div>
+        <div className="legend-row">
+          <span
+            className="legend-ring"
+            style={{ borderColor: "#f59e0b", borderWidth: 1.5, borderStyle: "dashed" }}
+          />
+          🟠 Raio de Alerta (Atenção)
         </div>
         <div className="legend-row">
           <span
             style={{
               display: "inline-block",
-              width: 12,
+              width: 14,
               height: 2,
               background: "#38bdf8",
               flex: "none",
             }}
           />
-          Varredura de radar (gira até 120 km)
+          📡 Varredura de Radar (Sentido Horário)
         </div>
         <div className="legend-row">
-          <BoltGlyph color="#ef4444" />
-          Raio crítico (próximo do local)
+          <BoltGlyph color="#facc15" /> ⚡ Raio em Local Monitorado (Amarelo)
         </div>
         <div className="legend-row">
-          <BoltGlyph color="#f59e0b" />
-          Raio externo (&gt; {radiusKm} km)
+          <BoltGlyph color="#ef4444" /> Raio Próximo / Crítico (Vermelho)
         </div>
         <div className="legend-row">
           <span
             className="legend-ring"
             style={{ background: "#f5009e", borderColor: "#111827" }}
           />
-          Raios América do Sul (satélite ao vivo)
-        </div>
-        <div className="legend-row" style={{ color: "var(--ink-mute)", fontSize: 11 }}>
-          O tamanho do marcador segue a intensidade (kA). Intensidade e tipo (CG/IC) são estimativas ilustrativas — não medidas pelo GLM.
+          Raios GOES-19 GLM (América do Sul)
         </div>
       </div>
     </div>
