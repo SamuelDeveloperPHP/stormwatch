@@ -26,32 +26,50 @@ const userMarkerIcon = L.divIcon({
   popupAnchor: [0, -38],
 });
 
-// Função utilitária para distância Haversine em km
-function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+type StrikeZone = "critical" | "alert" | "outer";
+
+function getStrikeZone(
+  s: Strike,
+  userLat: number,
+  userLon: number,
+  userCriticalRadiusKm: number,
+  userAlertRadiusKm: number,
+  sites: MonitorSite[]
+): StrikeZone {
+  // 1. Verifica Raio Crítico do Usuário ou de qualquer canteiro cadastrado
+  if (s.distanceKm <= userCriticalRadiusKm) return "critical";
+  for (const site of sites) {
+    if (getDistanceKm(s.lat, s.lon, site.lat, site.lon) <= site.criticalRadiusKm) {
+      return "critical";
+    }
+  }
+
+  // 2. Verifica Raio de Alerta do Usuário ou de qualquer canteiro cadastrado
+  if (s.distanceKm <= userAlertRadiusKm) return "alert";
+  for (const site of sites) {
+    if (getDistanceKm(s.lat, s.lon, site.lat, site.lon) <= site.alertRadiusKm) {
+      return "alert";
+    }
+  }
+
+  return "outer";
 }
 
 // Ícone de RELÂMPAGO para cada raio (marcação no mapa).
-// Raios dentro dos canteiros/locais cadastrados assumem a cor AMARELA (#facc15).
+// Vermelho para Raio Crítico | Amarelo para Raio de Alerta | Âmbar para raio distante
 const BOLT_PATH = "M7 2v11h3v9l7-12h-4l4-8z";
-function boltIcon(near: boolean, ampKa: number, isSiteStrike: boolean = false) {
+function boltIcon(zone: StrikeZone, ampKa: number) {
   const amp = Math.abs(ampKa || 0);
-  let color = isSiteStrike ? "#facc15" : near ? "#ef4444" : "#f59e0b"; // Amarelo vívido para raios em canteiros cadastrados
-  if (!isSiteStrike && amp >= 40) {
+  let color = "#f59e0b"; // Raio externo padrão
+  if (zone === "critical") {
+    color = "#ef4444"; // Vermelho vívido para Raio Crítico
+  } else if (zone === "alert") {
+    color = "#facc15"; // Amarelo vívido para Raio de Alerta
+  } else if (amp >= 40) {
     color = "#dc2626";
   }
 
-  const scale = isSiteStrike ? 22 : amp >= 40 ? 24 : amp >= 20 ? 20 : 16;
+  const scale = zone === "critical" ? 24 : zone === "alert" ? 22 : amp >= 20 ? 20 : 16;
   const anchor = Math.round(scale / 2);
 
   return L.divIcon({
@@ -530,11 +548,11 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
 
         {/* Renderização de Raios no Mapa */}
         {filteredStrikes.map((s) => {
-          const near = s.distanceKm <= radiusKm;
-          // Verifica se o raio caiu dentro do raio de alerta de algum canteiro/local cadastrado
-          const isSiteStrike = sites.some(
-            (site) => getDistanceKm(s.lat, s.lon, site.lat, site.lon) <= Math.max(site.alertRadiusKm, site.criticalRadiusKm)
-          );
+          const userLat = defaultCenter[0];
+          const userLon = defaultCenter[1];
+          const userAlertRadiusKm = Math.max(radiusKm, 15);
+          
+          const zone = getStrikeZone(s, userLat, userLon, radiusKm, userAlertRadiusKm, sites);
           const when = new Date(s.timestamp).toLocaleTimeString("pt-BR", {
             hour: "2-digit",
             minute: "2-digit",
@@ -542,10 +560,15 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
           const amp = Math.abs(s.peakAmpKa || 0);
 
           return (
-            <Marker key={s.id} position={[s.lat, s.lon]} icon={boltIcon(near, amp, isSiteStrike)}>
+            <Marker key={s.id} position={[s.lat, s.lon]} icon={boltIcon(zone, amp)}>
               <Popup>
                 <strong>{s.distanceKm} km</strong> · {when}
-                {isSiteStrike && <div style={{ color: "#eab308", fontWeight: 700, fontSize: 11 }}>⚡ Raio detectado no raio do local cadastrado!</div>}
+                {zone === "critical" && (
+                  <div style={{ color: "#ef4444", fontWeight: 700, fontSize: 11 }}>🔴 Raio no Raio Crítico do Local!</div>
+                )}
+                {zone === "alert" && (
+                  <div style={{ color: "#eab308", fontWeight: 700, fontSize: 11 }}>⚡ Raio no Raio de Alerta do Local!</div>
+                )}
                 <br />
                 Tipo:{" "}
                 {s.type === "CG" ? (
