@@ -103,8 +103,23 @@ function BoltGlyph({ color }: { color: string }) {
 
 /**
  * Camada de incidência (toda a América do Sul) em UM ÚNICO canvas.
+ * Desenha os raios de satélite como ÍCONES DE RELÂMPAGO (⚡) com classificação por zona de risco.
  */
-function IncidenceFlashLayer({ points }: { points: [number, number][] }) {
+function IncidenceFlashLayer({
+  points,
+  userLat,
+  userLon,
+  userCriticalRadiusKm,
+  userAlertRadiusKm,
+  sites,
+}: {
+  points: [number, number][];
+  userLat: number;
+  userLon: number;
+  userCriticalRadiusKm: number;
+  userAlertRadiusKm: number;
+  sites: MonitorSite[];
+}) {
   const map = useMap();
   const pointsRef = useRef<[number, number][]>(points);
   const dirtyRef = useRef(true);
@@ -127,9 +142,10 @@ function IncidenceFlashLayer({ points }: { points: [number, number][] }) {
     container.appendChild(canvas);
     const ctx = canvas.getContext("2d")!;
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const boltPath2D = new Path2D("M7 2v11h3v9l7-12h-4l4-8z");
 
     let dpr = 1;
-    let projected: { x: number; y: number; ph: number }[] = [];
+    let projected: { x: number; y: number; ph: number; color: string }[] = [];
 
     function resize() {
       const size = map.getSize();
@@ -144,11 +160,32 @@ function IncidenceFlashLayer({ points }: { points: [number, number][] }) {
     function project() {
       const size = map.getSize();
       const pts = pointsRef.current;
-      const out: { x: number; y: number; ph: number }[] = [];
+      const out: { x: number; y: number; ph: number; color: string }[] = [];
+
       for (let i = 0; i < pts.length; i++) {
-        const cp = map.latLngToContainerPoint(pts[i]);
-        if (cp.x < -8 || cp.y < -8 || cp.x > size.x + 8 || cp.y > size.y + 8) continue;
-        out.push({ x: cp.x, y: cp.y, ph: (i % 3) * 0.3 });
+        const [ptLat, ptLon] = pts[i];
+        const cp = map.latLngToContainerPoint([ptLat, ptLon]);
+        if (cp.x < -14 || cp.y < -14 || cp.x > size.x + 14 || cp.y > size.y + 14) continue;
+
+        // Classifica cada raio de satélite pela zona de risco (Crítica=Vermelho, Alerta=Amarelo, Outro=Rosa)
+        const strikeObj: Strike = {
+          id: `p-${i}`,
+          lat: ptLat,
+          lon: ptLon,
+          timestamp: Date.now(),
+          distanceKm: getDistanceKm(ptLat, ptLon, userLat, userLon),
+          type: "CG",
+        };
+        const analysis = getStrikeZone(strikeObj, userLat, userLon, userCriticalRadiusKm, userAlertRadiusKm, sites);
+
+        let color = "#f5009e"; // rosa satélite para raios distantes
+        if (analysis.zone === "critical") {
+          color = "#ef4444"; // vermelho raio crítico
+        } else if (analysis.zone === "alert") {
+          color = "#facc15"; // amarelo raio alerta
+        }
+
+        out.push({ x: cp.x, y: cp.y, ph: (i % 3) * 0.3, color });
       }
       projected = out;
       dirtyRef.current = false;
@@ -158,19 +195,23 @@ function IncidenceFlashLayer({ points }: { points: [number, number][] }) {
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
       for (let k = 0; k < projected.length; k++) {
         const p = projected[k];
         const a = reduceMotion
           ? 1
-          : 0.2 + 0.8 * (0.5 + 0.5 * Math.sin(((tsec + p.ph) / 0.9) * Math.PI * 2));
+          : 0.25 + 0.75 * (0.5 + 0.5 * Math.sin(((tsec + p.ph) / 0.9) * Math.PI * 2));
+
         ctx.globalAlpha = a;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
-        ctx.fillStyle = "#f5009e";
-        ctx.fill();
-        ctx.lineWidth = 1.5;
+        ctx.save();
+        ctx.translate(p.x - 7, p.y - 10);
+        ctx.scale(0.65, 0.65);
+        ctx.fillStyle = p.color;
+        ctx.fill(boltPath2D);
+        ctx.lineWidth = 1.2;
         ctx.strokeStyle = "#111827";
-        ctx.stroke();
+        ctx.stroke(boltPath2D);
+        ctx.restore();
       }
       ctx.globalAlpha = 1;
     }
@@ -462,7 +503,14 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
           url={tileUrl}
         />
 
-        <IncidenceFlashLayer points={snapshot?.regionStrikes ?? []} />
+        <IncidenceFlashLayer
+          points={snapshot?.regionStrikes ?? []}
+          userLat={defaultCenter[0]}
+          userLon={defaultCenter[1]}
+          userCriticalRadiusKm={radiusKm}
+          userAlertRadiusKm={Math.max(radiusKm, 15)}
+          sites={sites}
+        />
 
         {/* Varredura por Radar Sonar rotativo na Geolocalização do Usuário (linha limitada ao raio de alerta) */}
         <RadarSweepLayer center={defaultCenter} strikes={filteredStrikes} radiusKm={Math.max(radiusKm, 15)} />
