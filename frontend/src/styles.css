@@ -2639,6 +2639,22 @@ h1, h2, h3, h4 {
   box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
 }
 
+/* Disclaimer de segurança sempre visível no rodapé do painel do monitor */
+.safety-disclaimer {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+  background: var(--watch-bg);
+  border: 1px solid var(--watch-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 10px;
+}
+
+.safety-disclaimer strong {
+  color: var(--ink);
+}
+
 /* ═══════════════════════════════════════════════════════════════════
    HERO STORM-NIGHT — banner de duas colunas (visual da capa)
    ═══════════════════════════════════════════════════════════════════ */

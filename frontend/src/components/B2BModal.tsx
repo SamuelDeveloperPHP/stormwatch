@@ -64,7 +64,7 @@ export default function B2BModal({ isOpen, onClose, snapshot, selectedSite, onSe
                 Módulos B2B Enterprise & Obras ⚡
               </h2>
               <p style={{ fontSize: 12, color: "var(--ink-soft)", margin: 0 }}>
-                Gestão de Geofencing, Alertas via WhatsApp NR-18 e Emissão de Laudos de Força Maior
+                Gestão de Geofencing, Alertas via WhatsApp e Emissão de Relatórios de Telemetria
               </p>
             </div>
           </div>
@@ -91,7 +91,7 @@ export default function B2BModal({ isOpen, onClose, snapshot, selectedSite, onSe
             className={`b2b-tab-btn ${activeTab === "laudo" ? "active" : ""}`}
             onClick={() => setActiveTab("laudo")}
           >
-            📄 Emitir Laudo PDF
+            📄 Emitir Relatório PDF
           </button>
           <button
             className={`b2b-tab-btn ${activeTab === "multisite" ? "active" : ""}`}
@@ -293,10 +293,10 @@ export default function B2BModal({ isOpen, onClose, snapshot, selectedSite, onSe
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <div style={{ background: "var(--chip)", padding: 18, borderRadius: 14, border: "1px solid var(--line)" }}>
                 <h4 style={{ margin: "0 0 8px 0", fontSize: 16, fontWeight: 700 }}>
-                  📄 Gerador de Laudos de Força Maior para Seguradoras & Fiscalização
+                  📄 Gerador de Relatórios de Telemetria para Seguradoras & Fiscalização
                 </h4>
                 <p style={{ margin: "0 0 16px 0", fontSize: 13, color: "var(--ink-soft)" }}>
-                  O documento é emitido com marca d'água oficial, selo de autenticidade da telemetria <strong>NOAA GOES-19 GLM</strong>, pico de amperagem kA do raio e amparo legal no Art. 393 do Código Civil Brasileiro.
+                  O documento registra os dados de telemetria de descargas do <strong>NOAA GOES-19 GLM</strong> (fonte pública) e pode subsidiar comprovações contratuais. <strong>Não é um laudo técnico</strong> e não substitui a avaliação de profissional habilitado (engenheiro com ART).
                 </p>
 
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
@@ -305,7 +305,7 @@ export default function B2BModal({ isOpen, onClose, snapshot, selectedSite, onSe
                     className="btn-plan-action btn-plan-action--enterprise"
                     style={{ padding: "12px 24px", fontSize: 14, fontWeight: 800, width: "auto" }}
                   >
-                    🖨️ Emitir & Baixar Laudo Oficial em PDF
+                    🖨️ Gerar Relatório de Telemetria em PDF
                   </button>
                   <span style={{ fontSize: 12, color: "var(--ink-soft)" }}>
                     ● Válido para o local selecionado: <strong>{currentSite.name}</strong>
@@ -330,8 +330,8 @@ export default function B2BModal({ isOpen, onClose, snapshot, selectedSite, onSe
                   </div>
                 </div>
                 <div style={{ background: "var(--chip)", padding: 16, borderRadius: 12, border: "1px solid var(--line)" }}>
-                  <div style={{ fontSize: 11, color: "var(--ink-soft)", fontWeight: 700 }}>SLA TELEMÉTRICO</div>
-                  <div style={{ fontSize: 24, fontWeight: 800, color: "#ec4899" }}>99.9% GOES-19</div>
+                  <div style={{ fontSize: 11, color: "var(--ink-soft)", fontWeight: 700 }}>FONTE DE TELEMETRIA</div>
+                  <div style={{ fontSize: 24, fontWeight: 800, color: "#ec4899" }}>NOAA GOES-19</div>
                 </div>
               </div>
             </div>

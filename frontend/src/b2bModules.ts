@@ -68,22 +68,25 @@ export function sendWhatsAppAlertSimulation(site: B2BSite, messageType: "WARNING
   const phone = site.managerPhone.replace(/\D/g, "");
 
   if (messageType === "CRITICAL") {
-    text = `🚨 *ALERTA STORM WATCH - PARALISAÇÃO NR-18*\n\n` +
+    text = `🚨 *STORMWATCH - ALERTA DE RAIO (RAIO CRÍTICO)*\n\n` +
       `*Local:* ${site.name}\n` +
-      `*Status:* ⚡ RAIO DETECTADO NO RAIO CRÍTICO (${site.criticalRadiusKm} KM)\n` +
-      `*Ação Exigida:* Paralisar imediatamente trabalhos em gruas, andaimes e estruturas metálicas!\n` +
-      `*Fonte:* NOAA GOES-19 GLM Satellite\n` +
-      `*Cronômetro Tudo Limpo:* Iniciado em 30 min.`;
+      `*Status:* ⚡ Raio detectado dentro do raio crítico (${site.criticalRadiusKm} km)\n` +
+      `*Recomendação:* Considerar a paralisação imediata de trabalhos em gruas, andaimes e estruturas metálicas.\n` +
+      `*Fonte:* NOAA GOES-19 GLM (satélite)\n` +
+      `*Tudo Limpo:* contagem de 30 min inicia após a última descarga.\n\n` +
+      `_Ferramenta de apoio à decisão. A decisão final é do responsável pelo local._`;
   } else if (messageType === "WARNING") {
-    text = `⚠️ *ALERTA DE ATENÇÃO STORM WATCH*\n\n` +
+    text = `⚠️ *STORMWATCH - ATENÇÃO*\n\n` +
       `*Local:* ${site.name}\n` +
-      `*Status:* Tempestade se aproximando (Raio a menos de ${site.alertRadiusKm} km)\n` +
-      `*Recomendação:* Equipes de prontidão para evacuação preventiva.`;
+      `*Status:* Tempestade se aproximando (raio a menos de ${site.alertRadiusKm} km)\n` +
+      `*Recomendação:* Manter equipes de prontidão para eventual evacuação preventiva.\n\n` +
+      `_Ferramenta de apoio à decisão. A decisão final é do responsável pelo local._`;
   } else {
-    text = `✅ *STATUS TUDO LIMPO - RETOMADA PERMITIDA (NR-18)*\n\n` +
+    text = `✅ *STORMWATCH - TUDO LIMPO (SUGERIDO)*\n\n` +
       `*Local:* ${site.name}\n` +
       `*Status:* Nenhuma descarga detectada nos últimos 30 minutos.\n` +
-      `*Ação:* Trabalhos em altitude e canteiro liberados com segurança.`;
+      `*Recomendação:* Condições sugerem retomada — confirme a situação no local antes de liberar.\n\n` +
+      `_Ferramenta de apoio à decisão. A decisão final é do responsável pelo local._`;
   }
 
   const url = `https://wa.me/${phone}?text=${encodeURIComponent(text)}`;
@@ -97,12 +100,15 @@ export function generateLaudoPDF(snapshot: MonitorSnapshot | null, site?: B2BSit
   const targetSiteName = site ? site.name : "Canteiro de Obras & Eventos Corporativo";
   const targetAddress = site ? site.address : "Curitiba, PR - Brasil";
   const now = new Date();
-  const reportId = `SW-LAUDO-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, "0")}${now.getDate().toString().padStart(2, "0")}-${Math.floor(1000 + Math.random() * 9000)}`;
+  const reportId = `SW-REL-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, "0")}${now.getDate().toString().padStart(2, "0")}-${Math.floor(1000 + Math.random() * 9000)}`;
 
   const strikes = snapshot?.recentStrikes || [];
   const totalStrikes = strikes.length;
+  // Sem descargas reais no snapshot, o relatório cai para linhas de exemplo —
+  // sinalizamos isso de forma explícita para não passar por dado real.
+  const usingSampleData = strikes.length === 0;
   const closestStrike = snapshot?.closestStrikeKm !== null && snapshot?.closestStrikeKm !== undefined ? snapshot.closestStrikeKm.toFixed(1) : "3.4";
-  const statusLabel = snapshot?.status.level === "CRITICAL" ? "IMPOSSIBILIDADE OPERACIONAL (FORÇA MAIOR)" : "RISCO ELEVADO DE DESCARGA ATMOSFÉRICA";
+  const statusLabel = snapshot?.status.level === "CRITICAL" ? "CONDIÇÃO DE RISCO ELEVADO (POSSÍVEL FORÇA MAIOR)" : "RISCO ELEVADO DE DESCARGA ATMOSFÉRICA";
 
   const strikesRowsHtml = strikes.slice(0, 8).map((s, idx) => `
     <tr>
@@ -120,7 +126,7 @@ export function generateLaudoPDF(snapshot: MonitorSnapshot | null, site?: B2BSit
   <html lang="pt-BR">
   <head>
     <meta charset="UTF-8">
-    <title>Laudo Oficial por Força Maior - StormWatch #${reportId}</title>
+    <title>Relatório de Telemetria de Descargas Atmosféricas - StormWatch #${reportId}</title>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
       body {
@@ -152,7 +158,7 @@ export function generateLaudoPDF(snapshot: MonitorSnapshot | null, site?: B2BSit
         letter-spacing: 1px;
       }
       .laudo-badge {
-        background: #ef4444;
+        background: #0284c7;
         color: #ffffff;
         padding: 8px 16px;
         font-weight: 700;
@@ -247,12 +253,12 @@ export function generateLaudoPDF(snapshot: MonitorSnapshot | null, site?: B2BSit
         <div class="brand-title">STORMWATCH TECHNOLOGIES</div>
         <div class="brand-sub">SISTEMA DE MONITORAMENTO DE DESCARGAS ATMOSFÉRICAS</div>
       </div>
-      <div class="laudo-badge">LAUDO OFICIAL DE FORÇA MAIOR</div>
+      <div class="laudo-badge">RELATÓRIO DE TELEMETRIA</div>
     </div>
 
     <div style="margin-bottom: 20px;">
-      <h2 style="margin: 0 0 5px 0; font-size: 20px;">LAUDO DE COMPROVAÇÃO METEOROLÓGICA #${reportId}</h2>
-      <p style="margin: 0; font-size: 13px; color: #64748b;">Emissão automática autenticada para fins de comprovação contratual, seguradoras e conformidade NR-18.</p>
+      <h2 style="margin: 0 0 5px 0; font-size: 20px;">RELATÓRIO DE TELEMETRIA METEOROLÓGICA #${reportId}</h2>
+      <p style="margin: 0; font-size: 13px; color: #64748b;">Documento informativo gerado automaticamente a partir de dados públicos de telemetria. Pode subsidiar comprovações contratuais e de seguro, mas <strong>não constitui laudo técnico nem parecer de profissional habilitado</strong>.</p>
     </div>
 
     <div class="section-title">1. DADOS DO LOCAL E CONTEXTO OPERACIONAL</div>
@@ -265,13 +271,15 @@ export function generateLaudoPDF(snapshot: MonitorSnapshot | null, site?: B2BSit
 
     <div class="section-title">2. REGISTRO TELEMÉTRICO SATELITAL (NOAA GOES-19 GLM)</div>
     <div class="info-grid">
-      <div class="info-item"><strong>Fonte Autêntica:</strong> Satélite Geoestacionário GOES-19 GLM (NOAA)</div>
+      <div class="info-item"><strong>Fonte dos Dados:</strong> Satélite Geoestacionário GOES-19 GLM (NOAA, domínio público)</div>
       <div class="info-item"><strong>Menor Distância do Raio:</strong> ${closestStrike} km</div>
       <div class="info-item"><strong>Total de Descargas no Perímetro:</strong> ${totalStrikes > 0 ? totalStrikes : 12} descargas</div>
-      <div class="info-item"><strong>Norma Aplicada:</strong> NR-18 (Trabalhos em Altitude, Andaimes e Gruas)</div>
+      <div class="info-item"><strong>Contexto de Referência:</strong> Segurança em altura / NR-18 (Andaimes e Gruas)</div>
     </div>
 
-    <div class="section-title">3. REGISTRO DETALHADO DE DESCARGAS ATMOSFÉRICAS REGISTRADAS</div>
+    <div class="section-title">3. REGISTRO DETALHADO DE DESCARGAS ATMOSFÉRICAS</div>
+    ${usingSampleData ? `<p style="background:#fffbeb;border:1px solid #fcd34d;color:#92400e;padding:10px 12px;border-radius:6px;font-size:12px;font-weight:600;">⚠️ Dados ilustrativos de demonstração — nenhuma descarga real estava disponível no momento da geração.</p>` : ``}
+    <p style="font-size:11px;color:#64748b;margin:6px 0 0;">O GLM detecta a ocorrência e a localização das descargas (raio total). Os valores de amperagem (kA) e a classificação Nuvem-Solo/Intranuvem são estimativas ilustrativas e <strong>não são medidos pelo GLM</strong>.</p>
     <table>
       <thead>
         <tr>
@@ -315,17 +323,17 @@ export function generateLaudoPDF(snapshot: MonitorSnapshot | null, site?: B2BSit
 
     <div class="stamp-box">
       <div>
-        <div style="font-size: 14px; font-weight: 700; color: #0284c7;">AUTENTICAÇÃO TELEMÉTRICA DIGITAL</div>
-        <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Hash de Validação: <code>SHA256-${Math.random().toString(36).substring(2)}${Math.random().toString(36).substring(2)}</code></div>
+        <div style="font-size: 14px; font-weight: 700; color: #0284c7;">IDENTIFICAÇÃO DO DOCUMENTO</div>
+        <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Nº ${reportId} · Gerado em ${now.toLocaleDateString("pt-BR")} às ${now.toLocaleTimeString("pt-BR")}</div>
       </div>
       <div style="text-align: right;">
-        <div style="font-size: 12px; font-weight: 700; color: #0369a1;">STORMWATCH B2B ENTERPRISE</div>
+        <div style="font-size: 12px; font-weight: 700; color: #0369a1;">StormWatch — Telemetria de Raios</div>
         <div style="font-size: 11px; color: #64748b;">NexoCore Tecnologia LTDA.</div>
       </div>
     </div>
 
     <div class="legal-text">
-      <strong>PARECER JURÍDICO OPERACIONAL:</strong> O presente laudo atesta a ocorrência comprovada de descargas elétricas atmosféricas no perímetro de segurança do local supracitado. Sob a regência do Art. 393 do Código Civil Brasileiro (Caso Fortuito e Força Maior) e observando os requisitos de integridade física exigidos pela Norma Regulamentadora NR-18 do Ministério do Trabalho, a paralisação das atividades em altitude e movimentação de cargas foi obrigatoriamente executada para resguardo da vida humana e dos equipamentos.
+      <strong>AVISO LEGAL:</strong> Este é um relatório informativo de telemetria de descargas atmosféricas, gerado automaticamente a partir do produto público NOAA GOES-19 GLM. <strong>Não constitui laudo técnico, parecer jurídico ou documento pericial</strong> e não substitui a avaliação de profissional legalmente habilitado (por exemplo, engenheiro de segurança do trabalho com ART). A eventual caracterização de caso fortuito ou força maior (Art. 393 do Código Civil) e o enquadramento na NR-18 dependem de análise do caso concreto pelos responsáveis técnicos e jurídicos. O StormWatch é uma ferramenta de apoio à decisão; a decisão de paralisar ou retomar atividades é de responsabilidade exclusiva dos gestores do local.
     </div>
   </body>
   </html>

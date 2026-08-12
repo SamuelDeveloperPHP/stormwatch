@@ -203,7 +203,7 @@ export default function App() {
             className="theme-toggle-btn"
             onClick={() => setIsB2BModalOpen(true)}
             style={{ background: "#0284c7", color: "#ffffff", border: "none", fontWeight: 700 }}
-            title="Módulos Pagos B2B (Geofencing, WhatsApp e Laudos)"
+            title="Módulos Pagos B2B (Geofencing, WhatsApp e Relatórios)"
           >
             ⚡ Módulos B2B Enterprise
           </button>
@@ -277,7 +277,7 @@ export default function App() {
               onClick={() => generateLaudoPDF(snapshot, selectedB2BSite || undefined)}
               style={{ flex: 1, padding: "10px 12px", background: "var(--chip)", color: "var(--ink)", border: "1px solid var(--line)", borderRadius: 8, fontWeight: 700, fontSize: 12, cursor: "pointer" }}
             >
-              📄 Emitir Laudo PDF
+              📄 Emitir Relatório PDF
             </button>
           </div>
 
@@ -290,6 +290,13 @@ export default function App() {
           <p className="muted">
             Raios: NOAA GOES-19 GLM (tempo quase real, América do Sul). Previsão:
             Open-Meteo. Alertas saem por webhook genérico.
+          </p>
+          <p className="safety-disclaimer">
+            ⚠️ Ferramenta de <strong>apoio à decisão</strong>. Não substitui os
+            protocolos de segurança do local, os alertas oficiais da Defesa
+            Civil/INMET nem a avaliação de profissional habilitado. Fonte única
+            (GOES-19), incerteza de ~10&nbsp;km e latência de 1–2&nbsp;min. Parar ou
+            retomar atividades é responsabilidade do usuário.
           </p>
           <details className="terms">
             <summary>Termos de uso e responsabilidade</summary>

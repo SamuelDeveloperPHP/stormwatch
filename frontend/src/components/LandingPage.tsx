@@ -91,7 +91,7 @@ export default function LandingPage({
             </h1>
             <p className="hero-subtitle">
               Monitore descargas atmosféricas em tempo real, proteja suas equipes no
-              campo, automatize alertas de paralisação e gere laudos de força maior.
+              campo, automatize alertas de paralisação e gere relatórios de telemetria.
             </p>
             <div className="hero-cta-group">
               <button className="btn-hero-primary" onClick={onOpenApp}>
@@ -106,7 +106,7 @@ export default function LandingPage({
               <span className="hero-chip"><span className="chip-dot" style={{ background: "#38bdf8" }} />NOAA GOES-19</span>
               <span className="hero-chip"><span className="chip-dot" style={{ background: "#22c55e" }} />Alertas WhatsApp</span>
               <span className="hero-chip"><span className="chip-dot" style={{ background: "#f59e0b" }} />NR-18</span>
-              <span className="hero-chip"><span className="chip-dot" style={{ background: "#a78bfa" }} />Laudo PDF</span>
+              <span className="hero-chip"><span className="chip-dot" style={{ background: "#a78bfa" }} />Relatório PDF</span>
             </div>
 
             <div className="hero-status-pills">
@@ -143,7 +143,7 @@ export default function LandingPage({
           <div className="stat-divider" />
           <div className="stat-item">
             <span className="stat-value">NR-18 & Defesa Civil</span>
-            <span className="stat-label">Conformidade Operacional</span>
+            <span className="stat-label">Apoio à Conformidade</span>
           </div>
         </div>
       </header>
@@ -184,7 +184,7 @@ export default function LandingPage({
                   }`}
                 >
                   {current?.condition === "thunderstorm" ? (
-                    <><StopIcon size={14} style={{ marginRight: 6 }} />Alerta NR-18: Risco de Raios / Paralisação</>
+                    <><StopIcon size={14} style={{ marginRight: 6 }} />Risco de Raios — sugerir paralisação</>
                   ) : current?.condition === "rain" ? (
                     <><WarnIcon size={14} style={{ marginRight: 6 }} />Atenção: Janela de Chuva</>
                   ) : (
@@ -310,7 +310,7 @@ export default function LandingPage({
             </div>
             <h3>Construção Civil & Gruas</h3>
             <p>
-              Alertas de paralisação automática para trabalhos em andaimes, estaiamento e operação de guindastes conforme norma NR-18.
+              Alertas de paralisação para trabalhos em andaimes, estaiamento e operação de guindastes, em apoio à NR-18.
             </p>
             <ul>
               <li><CheckIcon />Alertas por raio de aproximação (8 km / 15 km)</li>
@@ -345,7 +345,7 @@ export default function LandingPage({
             <ul>
               <li><CheckIcon />Análise de pico de amperagem em kA</li>
               <li><CheckIcon />Separação de raios Nuvem-Solo (CG)</li>
-              <li><CheckIcon />Laudos de paralisação por Força Maior</li>
+              <li><CheckIcon />Relatórios de telemetria de paralisação</li>
             </ul>
           </div>
         </div>
@@ -374,7 +374,7 @@ export default function LandingPage({
               <li><CheckIcon />Análise básica de amperagem (kA)</li>
               <li><CheckIcon />Previsão do tempo Open-Meteo</li>
               <li className="disabled"><XIcon />Alertas automáticos via WhatsApp/SMS</li>
-              <li className="disabled"><XIcon />Relatório em PDF por Força Maior</li>
+              <li className="disabled"><XIcon />Relatório de telemetria em PDF</li>
             </ul>
 
             <button className="btn-plan-action btn-plan-action--free" onClick={onOpenApp}>
@@ -422,7 +422,7 @@ export default function LandingPage({
             <ul className="plan-features">
               <li><CheckIcon /><strong>Tudo do Plano Intermediário +</strong></li>
               <li><CheckIcon />Monitoramento de múltiplos locais no mesmo painel</li>
-              <li><CheckIcon /><strong>Laudo em PDF de Força Maior</strong> para seguradoras</li>
+              <li><CheckIcon /><strong>Relatório de telemetria em PDF</strong> (força maior) para seguradoras</li>
               <li><CheckIcon />API dedicada de integração (Webhooks/REST)</li>
               <li><CheckIcon />Gerente de conta dedicado & SLA 24/7</li>
             </ul>
