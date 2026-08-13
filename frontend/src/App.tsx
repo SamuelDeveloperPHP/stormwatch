@@ -184,6 +184,16 @@ export default function App() {
     setReportUsedToday(true);
   };
 
+  // Estado para controlar expansão / colapso do painel esquerdo de alertas
+  const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
+
+  const toggleLeftPanel = () => {
+    setIsLeftPanelOpen((prev) => !prev);
+    setTimeout(() => {
+      window.dispatchEvent(new Event("resize"));
+    }, 150);
+  };
+
   // Estado para alternar entre Mapa e Painéis no celular (mobile)
   const [mobileTab, setMobileTab] = useState<"map" | "panels">("map");
 
@@ -230,7 +240,7 @@ export default function App() {
   }
 
   return (
-    <div className={`app mobile-view-${mobileTab}`}>
+    <div className={`app mobile-view-${mobileTab} ${!isLeftPanelOpen ? "left-collapsed" : ""}`}>
       <header className="topbar">
         <div className="brand" onClick={() => setViewMode("landing")} style={{ cursor: "pointer" }}>
           <span className="brand-dot" />
@@ -251,11 +261,19 @@ export default function App() {
         <div className="topbar-actions">
           <button
             className="theme-toggle-btn"
+            onClick={toggleLeftPanel}
+            style={{ background: isLeftPanelOpen ? "#0284c7" : "#10b981", color: "#ffffff", border: "none", fontWeight: 700 }}
+            title={isLeftPanelOpen ? "Ocultar Painel de Alertas" : "Exibir Painel de Alertas"}
+          >
+            ☰ {isLeftPanelOpen ? "Ocultar Painel" : "Exibir Painel"}
+          </button>
+          <button
+            className="theme-toggle-btn"
             onClick={() => setIsLocationsOpen((v) => !v)}
-            style={{ background: "#0284c7", color: "#ffffff", border: "none", fontWeight: 700 }}
+            style={{ background: "var(--bg-elev)", color: "var(--ink)", border: "1px solid var(--line)", fontWeight: 700 }}
             title="Locais de monitoramento"
           >
-            ☰ Locais ({sites.length})
+            📍 Locais ({sites.length})
           </button>
           <button
             className="theme-toggle-btn"
@@ -306,7 +324,7 @@ export default function App() {
         </button>
       </div>
 
-      <aside className="sidebar">
+      <aside className={`sidebar ${!isLeftPanelOpen ? "left-collapsed" : ""}`}>
         <div className="sidebar-col sidebar-col1">
           {error && <div className="error-banner">{error}</div>}
           {geoNote && <div className="geo-note">{geoNote}</div>}
@@ -377,9 +395,24 @@ export default function App() {
         </div>
 
         <div className="sidebar-col sidebar-col2">
-          <button className="open-locations-btn" onClick={() => setIsLocationsOpen(true)}>
-            ☰ Locais de Monitoramento & Relatório
-          </button>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button
+              className={`open-locations-btn ${!isLeftPanelOpen ? "collapsed" : ""}`}
+              onClick={toggleLeftPanel}
+              style={{ flex: 1, background: isLeftPanelOpen ? "#0284c7" : "#10b981" }}
+              title={isLeftPanelOpen ? "Ocultar Painel Esquerdo" : "Exibir Painel Esquerdo"}
+            >
+              ☰ {isLeftPanelOpen ? "Ocultar Painel" : "Exibir Painel"}
+            </button>
+            <button
+              className="open-locations-btn"
+              onClick={() => setIsLocationsOpen(true)}
+              style={{ background: "var(--bg-elev)", color: "var(--ink)", border: "1px solid var(--line)" }}
+              title="Locais de Monitoramento & Relatório"
+            >
+              📍 Locais ({sites.length})
+            </button>
+          </div>
 
           <StrikeList
             snapshot={snapshot}
