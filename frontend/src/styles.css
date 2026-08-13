@@ -1940,6 +1940,44 @@ h1, h2, h3, h4 {
   color: var(--ink-soft);
   margin: 0;
 }
+.wind-alert-chart-title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-mute);
+  margin: 4px 0 2px;
+}
+.wind-alert-chart {
+  position: relative;
+  height: 150px;
+}
+.wind-alert-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 4px 0 8px;
+  font-size: 10px;
+  color: var(--ink-mute);
+}
+.wind-alert-legend span {
+  display: inline-flex;
+  align-items: center;
+}
+.wind-dash {
+  display: inline-block;
+  width: 14px;
+  height: 0;
+  margin-right: 5px;
+  border-top: 2px dashed currentColor;
+  vertical-align: middle;
+}
+.wind-dash--attention {
+  color: #d97706;
+}
+.wind-dash--critical {
+  color: #dc2626;
+}
 
 .pricing-card {
   background: var(--panel);
