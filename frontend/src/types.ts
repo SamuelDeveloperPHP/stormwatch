@@ -55,6 +55,10 @@ export interface HourlyPoint {
   precipMm?: number;
   windKmh?: number;
   windDirDeg?: number;
+  windGustKmh?: number;
+  windAlt80Kmh?: number;
+  windAlt120Kmh?: number;
+  windAlt180Kmh?: number;
   humidity?: number;
   condition: string;
   conditionLabel?: string;

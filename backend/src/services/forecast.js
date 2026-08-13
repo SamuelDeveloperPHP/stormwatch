@@ -79,7 +79,7 @@ async function openMeteoForecast({ lat, lon, label }) {
     current:
       "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,wind_speed_80m,wind_speed_120m,wind_speed_180m",
     hourly:
-      "temperature_2m,precipitation_probability,precipitation,wind_speed_10m,wind_direction_10m,relative_humidity_2m,weather_code",
+      "temperature_2m,precipitation_probability,precipitation,wind_speed_10m,wind_direction_10m,wind_gusts_10m,wind_speed_80m,wind_speed_120m,wind_speed_180m,relative_humidity_2m,weather_code",
     daily:
       "weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max",
     timezone: "auto", // horários no fuso local do ponto monitorado
@@ -117,6 +117,10 @@ async function openMeteoForecast({ lat, lon, label }) {
   const precMms = data.hourly?.precipitation ?? [];
   const windSpeeds = data.hourly?.wind_speed_10m ?? [];
   const windDirs = data.hourly?.wind_direction_10m ?? [];
+  const windGusts = data.hourly?.wind_gusts_10m ?? [];
+  const windAlt80 = data.hourly?.wind_speed_80m ?? [];
+  const windAlt120 = data.hourly?.wind_speed_120m ?? [];
+  const windAlt180 = data.hourly?.wind_speed_180m ?? [];
   const humidities = data.hourly?.relative_humidity_2m ?? [];
   const codes = data.hourly?.weather_code ?? [];
 
@@ -137,6 +141,10 @@ async function openMeteoForecast({ lat, lon, label }) {
       precipMm: parseFloat((precMms[i] ?? 0).toFixed(1)),
       windKmh: Math.round(windSpeeds[i] ?? 0),
       windDirDeg: Math.round(windDirs[i] ?? 0),
+      windGustKmh: Math.round(windGusts[i] ?? 0),
+      windAlt80Kmh: Math.round(windAlt80[i] ?? 0),
+      windAlt120Kmh: Math.round(windAlt120[i] ?? 0),
+      windAlt180Kmh: Math.round(windAlt180[i] ?? 0),
       humidity: Math.round(humidities[i] ?? 0),
       condition: d.condition,
       conditionLabel: d.label,
@@ -214,14 +222,19 @@ async function mockForecast({ lat, lon, label }) {
   const hourly = Array.from({ length: 12 }, (_, i) => {
     const t = new Date(now.getTime() + i * 3600 * 1000);
     const c = CONDITIONS[Math.floor(Math.random() * CONDITIONS.length)];
+    const hWind = Math.round(10 + Math.random() * 45); // 10..55 km/h (superfície)
     return {
       time: t.toISOString(),
       hourLabel: `${String(t.getHours()).padStart(2, "0")}h`,
       tempC: Math.round(15 + Math.random() * 10),
       precipProb: Math.round(Math.random() * 100),
       precipMm: parseFloat((Math.random() * 2).toFixed(1)),
-      windKmh: Math.round(5 + Math.random() * 20),
+      windKmh: hWind,
       windDirDeg: Math.round(Math.random() * 360),
+      windGustKmh: Math.round(hWind * 1.5),
+      windAlt80Kmh: Math.round(hWind * 1.3),
+      windAlt120Kmh: Math.round(hWind * 1.5),
+      windAlt180Kmh: Math.round(hWind * 1.7),
       humidity: Math.round(60 + Math.random() * 35),
       condition: c.code,
       conditionLabel: c.label,

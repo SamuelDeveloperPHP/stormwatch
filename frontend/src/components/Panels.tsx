@@ -374,7 +374,7 @@ export function ForecastPanel({ forecast, place }: { forecast: Forecast | null; 
         </div>
       </div>
 
-      <WindAlertCard current={c} />
+      <WindAlertCard forecast={forecast} />
 
       <div
         className="hourly-title"
