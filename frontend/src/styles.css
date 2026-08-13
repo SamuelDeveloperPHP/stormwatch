@@ -1738,6 +1738,107 @@ h1, h2, h3, h4 {
   align-items: stretch;
 }
 
+/* Dois planos (Gratuito + Pago): duas colunas centralizadas */
+.pricing-grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 860px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 760px) {
+  .pricing-grid--two {
+    grid-template-columns: 1fr;
+    max-width: 460px;
+  }
+}
+
+/* Nota de rodapé dentro de um item do plano (ex.: validação legal do relatório) */
+.plan-note {
+  display: block;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--ink-mute);
+  margin-top: 4px;
+}
+
+/* ── Card de alerta de vento em altitude & rajadas (monitor) ── */
+.wind-alert {
+  margin-top: 12px;
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: var(--chip);
+}
+.wind-alert--attention {
+  border-color: var(--watch-border);
+  background: var(--watch-bg);
+}
+.wind-alert--critical {
+  border-color: var(--alert-border);
+  background: var(--alert-bg);
+}
+.wind-alert-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.wind-alert-title {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.wind-alert-badge {
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.wind-alert--safe .wind-alert-badge {
+  color: var(--safe);
+}
+.wind-alert--attention .wind-alert-badge {
+  color: var(--watch);
+}
+.wind-alert--critical .wind-alert-badge {
+  color: var(--alert);
+}
+.wind-alert-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.wind-alert-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1px;
+  padding: 6px 4px;
+  border-radius: 8px;
+  background: rgba(148, 163, 184, 0.14);
+}
+.wind-alert-metric span {
+  font-size: 10px;
+  color: var(--ink-mute);
+  font-weight: 600;
+  text-transform: uppercase;
+}
+.wind-alert-metric strong {
+  font-size: 13px;
+  color: var(--ink);
+}
+.wind-alert-msg {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
 .pricing-card {
   background: var(--panel);
   border: 1px solid var(--line);
@@ -1745,7 +1846,7 @@ h1, h2, h3, h4 {
   padding: 32px 24px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: flex-start;
   position: relative;
   transition: transform 0.2s;
 }
@@ -1852,6 +1953,7 @@ h1, h2, h3, h4 {
 
 .btn-plan-action {
   width: 100%;
+  margin-top: auto;
   padding: 12px;
   border-radius: 10px;
   font-family: var(--font-body);

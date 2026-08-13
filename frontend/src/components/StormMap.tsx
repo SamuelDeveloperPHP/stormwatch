@@ -136,51 +136,40 @@ function IncidenceFlashLayer({
   sites: MonitorSite[];
 }) {
   const map = useMap();
-  const pointsRef = useRef<[number, number][]>(points);
-  const dirtyRef = useRef(true);
 
   useEffect(() => {
-    pointsRef.current = points;
-    dirtyRef.current = true;
-  }, [points]);
-
-  useEffect(() => {
-    const container = map.getContainer();
+    // A canvas vive no OVERLAY PANE do Leaflet, que é transformado junto com o
+    // mapa durante o arraste (via CSS transform/GPU). Assim os raios acompanham
+    // o "clica e arrasta" sem NENHUM redraw por frame — só reposicionamos e
+    // redesenhamos quando a vista assenta (moveend/zoom/resize). Isso elimina o
+    // lag em que os raios pareciam "presos" ao arrastar o mapa.
+    const pane = map.getPanes().overlayPane;
     const canvas = L.DomUtil.create("canvas", "incidence-flash") as HTMLCanvasElement;
-    Object.assign(canvas.style, {
-      position: "absolute",
-      top: "0",
-      left: "0",
-      zIndex: "450",
-      pointerEvents: "none",
-    });
-    container.appendChild(canvas);
+    canvas.style.position = "absolute";
+    canvas.style.pointerEvents = "none";
+    pane.appendChild(canvas);
     const ctx = canvas.getContext("2d")!;
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const boltPath2D = new Path2D("M7 2v11h3v9l7-12h-4l4-8z");
 
+    // Padding além do viewport: durante o arraste, revela raios já desenhados
+    // nas bordas antes do redraw final.
+    const PAD = 300;
     let dpr = 1;
-    let projected: { x: number; y: number; ph: number; color: string }[] = [];
+    let origin = L.point(0, 0); // canto superior-esquerdo da canvas em coords de camada
 
-    function resize() {
-      const size = map.getSize();
-      dpr = Math.max(1, window.devicePixelRatio || 1);
-      canvas.width = Math.round(size.x * dpr);
-      canvas.height = Math.round(size.y * dpr);
-      canvas.style.width = `${size.x}px`;
-      canvas.style.height = `${size.y}px`;
-      dirtyRef.current = true;
-    }
+    function draw() {
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    function project() {
-      const size = map.getSize();
-      const pts = pointsRef.current;
-      const out: { x: number; y: number; ph: number; color: string }[] = [];
-
-      for (let i = 0; i < pts.length; i++) {
-        const [ptLat, ptLon] = pts[i];
-        const cp = map.latLngToContainerPoint([ptLat, ptLon]);
-        if (cp.x < -14 || cp.y < -14 || cp.x > size.x + 14 || cp.y > size.y + 14) continue;
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
+      for (let i = 0; i < points.length; i++) {
+        const [ptLat, ptLon] = points[i];
+        const lp = map.latLngToLayerPoint([ptLat, ptLon]);
+        const x = lp.x - origin.x;
+        const y = lp.y - origin.y;
+        if (x < -14 || y < -14 || x > w + 14 || y > h + 14) continue;
 
         // Classifica cada raio de satélite pela zona de risco (Crítica=Vermelho, Alerta=Amarelo, Outro=Rosa)
         const strikeObj: Strike = {
@@ -192,32 +181,15 @@ function IncidenceFlashLayer({
           type: "CG",
         };
         const analysis = getStrikeZone(strikeObj, userLat, userLon, userCriticalRadiusKm, userAlertRadiusKm, sites);
-
         let color = "#f5009e"; // rosa satélite para raios distantes
-        if (analysis.zone === "critical") {
-          color = "#ef4444"; // vermelho raio crítico
-        } else if (analysis.zone === "alert") {
-          color = "#facc15"; 
-        }
+        if (analysis.zone === "critical") color = "#ef4444"; // vermelho raio crítico
+        else if (analysis.zone === "alert") color = "#facc15"; // amarelo raio de alerta
 
-        out.push({ x: cp.x, y: cp.y, color });
-      }
-      projected = out;
-      dirtyRef.current = false;
-    }
-
-    function draw() {
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      for (let k = 0; k < projected.length; k++) {
-        const p = projected[k];
-        ctx.globalAlpha = 0.95; 
+        ctx.globalAlpha = 0.95;
         ctx.save();
-        ctx.translate(p.x - 7, p.y - 10);
+        ctx.translate(x - 7, y - 10);
         ctx.scale(0.65, 0.65);
-        ctx.fillStyle = p.color;
+        ctx.fillStyle = color;
         ctx.fill(boltPath2D);
         ctx.lineWidth = 1.2;
         ctx.strokeStyle = "#111827";
@@ -227,32 +199,38 @@ function IncidenceFlashLayer({
       ctx.globalAlpha = 1;
     }
 
-    resize();
-
-    const redraw = () => {
-      project();
+    // Reposiciona a canvas no viewport atual (em coords de camada) e redesenha.
+    function reset() {
+      const size = map.getSize();
+      dpr = Math.max(1, window.devicePixelRatio || 1);
+      const w = size.x + PAD * 2;
+      const h = size.y + PAD * 2;
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      origin = map.containerPointToLayerPoint([-PAD, -PAD]);
+      L.DomUtil.setPosition(canvas, origin);
+      canvas.style.visibility = "visible";
       draw();
-    };
+    }
+
+    // Durante a animação de zoom o pane é escalado (distorceria a canvas raster);
+    // escondemos e o zoomend/viewreset reposiciona + redesenha.
     const hide = () => {
       canvas.style.visibility = "hidden";
     };
-    const show = () => {
-      canvas.style.visibility = "visible";
-      redraw();
-    };
 
-    redraw();
-    map.on("move zoom viewreset resize", redraw);
+    reset();
+    map.on("moveend viewreset zoomend resize", reset);
     map.on("zoomstart", hide);
-    map.on("zoomend", show);
 
     return () => {
-      map.off("move zoom viewreset resize", redraw);
+      map.off("moveend viewreset zoomend resize", reset);
       map.off("zoomstart", hide);
-      map.off("zoomend", show);
-      container.removeChild(canvas);
+      pane.removeChild(canvas);
     };
-  }, [map, userLat, userLon, userCriticalRadiusKm, userAlertRadiusKm, sites]);
+  }, [map, points, userLat, userLon, userCriticalRadiusKm, userAlertRadiusKm, sites]);
 
   return null;
 }
@@ -638,25 +616,25 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
       <div className="legend">
         <div className="legend-row">
           <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: "#10b981", border: "2px solid #047857", flex: "none" }} />
-          <strong>🟢 Geolocalização Atual do Usuário</strong>
+          <strong>Sua Localização Atual</strong>
         </div>
         <div className="legend-row">
           <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", background: "#0284c7", border: "2px solid #0369a1", flex: "none" }} />
-          <strong>📍 Canteiro / Local Monitorado</strong>
+          <strong>Locais adicionados</strong>
         </div>
         <div className="legend-row">
           <span
             className="legend-ring"
             style={{ borderColor: "#ef4444", borderWidth: 2, background: "rgba(239, 68, 68, 0.15)" }}
           />
-          🔴 Raio Crítico (Segurança Operacional)
+          Raio Crítico (Segurança Operacional)
         </div>
         <div className="legend-row">
           <span
             className="legend-ring"
             style={{ borderColor: "#f59e0b", borderWidth: 1.5, borderStyle: "dashed" }}
           />
-          🟠 Raio de Alerta (Atenção)
+          Raio de Alerta (Atenção)
         </div>
         <div className="legend-row">
           <span
@@ -671,7 +649,7 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
           📡 Varredura de Radar (Sentido Horário)
         </div>
         <div className="legend-row">
-          <BoltGlyph color="#facc15" /> ⚡ Raio em Local Monitorado (Amarelo)
+          <BoltGlyph color="#facc15" /> Raio em Local Monitorado (Amarelo)
         </div>
         <div className="legend-row">
           <BoltGlyph color="#ef4444" /> Raio Próximo / Crítico (Vermelho)

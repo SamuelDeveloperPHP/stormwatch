@@ -82,6 +82,10 @@ export interface Forecast {
     feelsLikeC: number;
     humidity: number;
     windKmh: number;
+    windGustKmh?: number;
+    windAlt80Kmh?: number;
+    windAlt120Kmh?: number;
+    windAlt180Kmh?: number;
     condition: string;
     conditionLabel: string;
     icon: string;

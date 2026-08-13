@@ -1,3 +1,6 @@
 flask>=3.0
 netCDF4>=1.6
 numpy>=1.26
+# Servidor WSGI de produção para rodar local (compatível com Windows).
+# No Docker/Linux o Dockerfile usa gunicorn.
+waitress>=3.0
