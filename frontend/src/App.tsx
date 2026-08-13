@@ -419,6 +419,8 @@ export default function App() {
             filter={strikeFilter}
             onFilterChange={setStrikeFilter}
             onOpenInfo={() => setIsInfoOpen(true)}
+            activeSite={activeSite}
+            userLocationName={place || snapshot?.location.label || "Sua Geolocalização"}
           />
           <p className="muted">
             Raios: NOAA GOES-19 GLM (tempo quase real, América do Sul). Previsão:
