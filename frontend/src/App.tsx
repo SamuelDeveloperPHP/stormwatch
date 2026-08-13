@@ -50,6 +50,8 @@ export default function App() {
 
   // Estado para armazenar previsões de tempo de cada local monitorado
   const [siteForecasts, setSiteForecasts] = useState<Record<string, Forecast>>({});
+  // Snapshot de raios por local monitorado (para "raios recentes" por cidade)
+  const [siteSnapshots, setSiteSnapshots] = useState<Record<string, MonitorSnapshot>>({});
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -161,17 +163,34 @@ export default function App() {
     saveSites(sites);
   }, [sites]);
 
-  // Busca a previsão de tempo para o local selecionado quando ele muda
+  // Busca previsão + raios do local selecionado e mantém atualizado (mesmo passo
+  // do polling) enquanto ele estiver selecionado — assim os "raios recentes"
+  // refletem a cidade escolhida em tempo real.
   useEffect(() => {
     if (!selectedSiteId) return;
     const site = sites.find((s) => s.id === selectedSiteId);
     if (!site) return;
 
-    fetchForecast({ lat: site.lat, lon: site.lon })
-      .then((fc) => {
-        setSiteForecasts((prev) => ({ ...prev, [site.id]: fc }));
-      })
-      .catch(() => {});
+    let alive = true;
+    const load = () => {
+      fetchForecast({ lat: site.lat, lon: site.lon })
+        .then((fc) => {
+          if (alive) setSiteForecasts((prev) => ({ ...prev, [site.id]: fc }));
+        })
+        .catch(() => {});
+      fetchLightning({ lat: site.lat, lon: site.lon })
+        .then((snap) => {
+          if (alive) setSiteSnapshots((prev) => ({ ...prev, [site.id]: snap }));
+        })
+        .catch(() => {});
+    };
+
+    load();
+    const id = window.setInterval(load, POLL_MS);
+    return () => {
+      alive = false;
+      window.clearInterval(id);
+    };
   }, [selectedSiteId, sites]);
 
   const handleGenerateReport = (site: MonitorSite | null) => {
@@ -210,6 +229,7 @@ export default function App() {
   // Determina o local ativo para o painel esquerdo
   const activeSite = selectedSiteId ? sites.find((s) => s.id === selectedSiteId) : null;
   const activeForecast = activeSite ? (siteForecasts[activeSite.id] || null) : forecast;
+  const activeSnapshot = activeSite ? (siteSnapshots[activeSite.id] || null) : snapshot;
   const activeName = activeSite ? `${activeSite.name} (${activeSite.category})` : (place || snapshot?.location.label || "Sua Geolocalização");
   const activeSiteSafety = activeSite ? calculateSiteSafety(
     activeSite.lat,
@@ -377,7 +397,7 @@ export default function App() {
             locationName={activeSite ? activeSite.name : undefined}
           />
 
-          <IntensitySummaryPanel snapshot={snapshot} onOpenInfo={() => setIsInfoOpen(true)} />
+          <IntensitySummaryPanel snapshot={activeSnapshot} onOpenInfo={() => setIsInfoOpen(true)} />
 
           <ForecastPanel forecast={activeForecast} place={activeName} />
 
@@ -415,7 +435,7 @@ export default function App() {
           </div>
 
           <StrikeList
-            snapshot={snapshot}
+            snapshot={activeSnapshot}
             filter={strikeFilter}
             onFilterChange={setStrikeFilter}
             onOpenInfo={() => setIsInfoOpen(true)}
