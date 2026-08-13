@@ -458,9 +458,12 @@ export default function StormMap({ snapshot, filter = "all", theme = "dark", sit
 
   const ringColor = isLight ? "#2563eb" : "#38bdf8";
 
+  // Centro geográfico do Brasil para visualização completa inicial
+  const brazilCenter: [number, number] = [-14.235, -51.925];
+
   return (
     <div className="map-wrap">
-      <MapContainer center={initialCenter} zoom={7} scrollWheelZoom>
+      <MapContainer center={brazilCenter} zoom={4.2} scrollWheelZoom>
         <RecenterMap selectedSiteId={selectedSiteId} sites={sites} />
         <TileLayer
           key={theme}
