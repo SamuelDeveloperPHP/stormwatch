@@ -15,7 +15,6 @@ import {
   WindIcon,
   RainDropIcon,
   CheckIcon,
-  XIcon,
   ChatIcon,
 } from "./ui-icons.tsx";
 
@@ -98,7 +97,7 @@ export default function LandingPage({
                 <BoltIcon size={15} style={{ marginRight: 6 }} />Acessar Monitor Gratuito
               </button>
               <button className="btn-hero-secondary" onClick={scrollToPricing}>
-                <BriefcaseIcon size={15} style={{ marginRight: 7 }} />Ver Planos B2B para Empresas
+                <BriefcaseIcon size={15} style={{ marginRight: 7 }} />Ver planos
               </button>
             </div>
 
@@ -355,26 +354,42 @@ export default function LandingPage({
       <section id="pricing-section" className="landing-section pricing-bg">
 
         <div className="section-header">
-          <h2>Escolha o Plano Ideal para a Sua Operação</h2>
-          <p>Do acesso gratuito para cidadãos a soluções completas com emissão de laudos.</p>
+          <h2>Planos do StormWatch</h2>
+          <p>Comece no plano Gratuito — completo para monitorar até 3 locais. Migre para o Pago quando precisar de histórico em banco, relatórios periódicos e integração.</p>
         </div>
 
-        <div className="pricing-grid">
-          {/* Free Tier */}
+        <div className="pricing-grid pricing-grid--two">
+          {/* Plano Gratuito */}
           <div className="pricing-card">
             <div className="pricing-header">
               <span className="plan-badge plan-badge--free">Gratuito</span>
               <h3>Plano Gratuito</h3>
-              <p className="plan-desc">Acesso público para cidadãos e entusiastas da meteorologia.</p>
+              <p className="plan-desc">Tudo para monitorar raios em até 3 locais, sem custo.</p>
             </div>
 
             <ul className="plan-features">
               <li><CheckIcon />Feed ao vivo NOAA GOES-19 GLM</li>
-              <li><CheckIcon />Mapa interativo de radar (120 km)</li>
+              <li><CheckIcon />Mapa interativo de radar (você define o raio de cobertura)</li>
               <li><CheckIcon />Contagem e proximidade das descargas</li>
               <li><CheckIcon />Previsão do tempo Open-Meteo</li>
-              <li className="disabled"><XIcon />Alertas automáticos via WhatsApp/SMS</li>
-              <li className="disabled"><XIcon />Relatório de telemetria em PDF</li>
+              <li><CheckIcon />Geofencing por local (8 km e 15 km)</li>
+              <li><CheckIcon />Cronômetro "Tudo Limpo" (30 min)</li>
+              <li><CheckIcon />Alertas de vento em altitude e rajadas</li>
+              <li><CheckIcon />Adicionar até 3 localizações</li>
+              <li>
+                <CheckIcon />Relatório de telemetria em PDF
+                <span className="plan-note">
+                  Documento meramente informativo. Para valor legal (força maior, seguradoras,
+                  fiscalização), requer assinatura de Engenheiro de Segurança do Trabalho com
+                  CREA/ART ativo.
+                </span>
+              </li>
+              <li>
+                <CheckIcon />Dados guardados por 1 semana
+                <span className="plan-note">
+                  Salvos apenas no seu navegador e limpos automaticamente toda segunda-feira.
+                </span>
+              </li>
             </ul>
 
             <button className="btn-plan-action btn-plan-action--free" onClick={onOpenApp}>
@@ -382,56 +397,36 @@ export default function LandingPage({
             </button>
           </div>
 
-          {/* Intermediate Tier (Featured) */}
+          {/* Plano Pago (destaque) */}
           <div className="pricing-card pricing-card--featured">
-            <div className="featured-ribbon">MAIS POPULAR PARA OBRAS E EVENTOS</div>
+            <div className="featured-ribbon">MAIS COMPLETO</div>
             <div className="pricing-header">
-              <span className="plan-badge plan-badge--pro">Intermediário</span>
-              <h3>Plano Intermediário</h3>
-              <p className="plan-desc">Ideal para canteiros de obras, produtores de shows e arenas.</p>
+              <span className="plan-badge plan-badge--pro">Pago</span>
+              <h3>Plano Pago</h3>
+              <p className="plan-desc">Para operações que precisam de histórico, múltiplos locais e integração.</p>
             </div>
 
             <ul className="plan-features">
-              <li><CheckIcon /><strong>Tudo do Plano Gratuito +</strong></li>
-              <li><CheckIcon />Geofencing por Obra/Local (8 km e 15 km)</li>
-              <li><CheckIcon /><strong>Disparo no WhatsApp & SMS</strong> para equipes</li>
-              <li><CheckIcon />Cronômetro "Tudo Limpo" (30 min)</li>
-              <li><CheckIcon />Alertas de vento em altitude e rajadas</li>
-              <li><CheckIcon />Suporte técnico prioritário</li>
+              <li><CheckIcon /><strong>Tudo do plano Gratuito +</strong></li>
+              <li>
+                <CheckIcon />Relatórios de telemetria em PDF — semanal, mensal e anual
+                <span className="plan-note">
+                  Meramente informativos. Mesma validação legal por Engenheiro de Segurança do
+                  Trabalho com CREA/ART ativo.
+                </span>
+              </li>
+              <li><CheckIcon />Dados armazenados em banco de dados</li>
+              <li><CheckIcon />Monitoramento de múltiplos locais no mesmo painel</li>
+              <li><CheckIcon /><strong>Relatório de telemetria (força maior)</strong> para seguradoras</li>
+              <li><CheckIcon />API dedicada de integração (Webhooks/REST)</li>
+              <li><CheckIcon />Gerente de conta dedicado &amp; SLA 24/7</li>
             </ul>
 
             <a
-              href="https://wa.me/5541988885871?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20o%20Plano%20Intermedi%C3%A1rio%20do%20StormWatch"
+              href="https://wa.me/5541988885871?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20o%20Plano%20Pago%20do%20StormWatch"
               target="_blank"
               rel="noopener noreferrer"
               className="btn-plan-action btn-plan-action--pro"
-              style={{ textDecoration: "none", display: "inline-flex", justifyContent: "center", alignItems: "center" }}
-            >
-              Falar com Consultor
-            </a>
-          </div>
-
-          {/* Complete Tier */}
-          <div className="pricing-card">
-            <div className="pricing-header">
-              <span className="plan-badge plan-badge--enterprise">Completo</span>
-              <h3>Plano Completo</h3>
-              <p className="plan-desc">Para grandes construtoras, concessionárias e multi-eventos.</p>
-            </div>
-
-            <ul className="plan-features">
-              <li><CheckIcon /><strong>Tudo do Plano Intermediário +</strong></li>
-              <li><CheckIcon />Monitoramento de múltiplos locais no mesmo painel</li>
-              <li><CheckIcon /><strong>Relatório de telemetria em PDF</strong> (força maior) para seguradoras</li>
-              <li><CheckIcon />API dedicada de integração (Webhooks/REST)</li>
-              <li><CheckIcon />Gerente de conta dedicado & SLA 24/7</li>
-            </ul>
-
-            <a
-              href="https://wa.me/5541988885871?text=Ol%C3%A1%2C%20gostaria%20de%20saber%20mais%20sobre%20o%20Plano%20Completo%20do%20StormWatch"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-plan-action btn-plan-action--enterprise"
               style={{ textDecoration: "none", display: "inline-flex", justifyContent: "center", alignItems: "center" }}
             >
               Falar com Consultor

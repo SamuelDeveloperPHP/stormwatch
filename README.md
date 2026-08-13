@@ -107,6 +107,21 @@ pip install -r requirements.txt
 python glm_service.py         # sobe em http://127.0.0.1:5055
 ```
 
+> **Instalar é só na primeira vez.** O `pip install -r requirements.txt` grava as
+> dependências **dentro do `.venv`**, então elas **persistem** — você **não** precisa
+> reinstalar toda vez que reiniciar o serviço. Nas próximas vezes, basta **ativar o
+> venv** e rodar:
+>
+> ```bash
+> .\.venv\Scripts\Activate.ps1   # Windows · (Linux/macOS: source .venv/bin/activate)
+> python glm_service.py
+> ```
+>
+> Só rode o `pip install -r requirements.txt` de novo se **(a)** você recriar o
+> `.venv`, ou **(b)** o `requirements.txt` mudar (ex.: incluímos o **waitress**,
+> servidor WSGI de produção — rode o install **uma vez** para instalá-lo; a partir
+> daí o `python glm_service.py` sobe via waitress, sem o aviso de "development server").
+
 > Para sair do venv depois, use `deactivate`. Se preferir não ativar (útil em
 > scripts), chame o Python do venv direto: `.venv/Scripts/python.exe glm_service.py`
 > (Windows) ou `.venv/bin/python glm_service.py` (Linux/macOS).

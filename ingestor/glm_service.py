@@ -192,5 +192,17 @@ ensure_poller()
 
 
 if __name__ == "__main__":
-    # Servidor de desenvolvimento. Em produção, sirva via WSGI (ex.: waitress).
-    app.run(host=os.getenv("GLM_HOST", "127.0.0.1"), port=PORT, threaded=True)
+    host = os.getenv("GLM_HOST", "127.0.0.1")
+    try:
+        # Servidor WSGI de produção (compatível com Windows; sem o aviso do Flask).
+        # O poller da NOAA já subiu no import (ensure_poller); waitress é 1 processo
+        # multi-thread, e o buffer em memória é protegido por lock.
+        from waitress import serve
+
+        print(f" * Ingestor GLM servindo via waitress em http://{host}:{PORT}")
+        serve(app, host=host, port=PORT, threads=8)
+    except ImportError:
+        # Sem waitress: cai para o servidor de desenvolvimento do Flask (exibe aviso).
+        print(" * waitress nao encontrado — usando o servidor de desenvolvimento do Flask.")
+        print("   Para servir em producao, instale: pip install -r requirements.txt")
+        app.run(host=host, port=PORT, threaded=True)

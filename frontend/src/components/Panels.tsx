@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
 import type { Forecast, MonitorSnapshot, StrikeFilter } from "../types.ts";
+import WindAlertCard from "./WindAlertCard.tsx";
 
 // ── Ícones vetoriais minimalistas (estilo dashboard/BI) ────────────────────
 // Traço fino, monocromático. Herdam `currentColor` (ex.: a cor de status do CSS).
@@ -297,6 +298,8 @@ export function ForecastPanel({ forecast, place }: { forecast: Forecast | null; 
           <span>Vento {c.windKmh} km/h</span>
         </div>
       </div>
+
+      <WindAlertCard current={c} />
 
       <div
         className="hourly-title"

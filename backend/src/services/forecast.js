@@ -77,7 +77,7 @@ async function openMeteoForecast({ lat, lon, label }) {
     latitude: String(lat),
     longitude: String(lon),
     current:
-      "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m",
+      "temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m,wind_speed_80m,wind_speed_120m,wind_speed_180m",
     hourly:
       "temperature_2m,precipitation_probability,precipitation,wind_speed_10m,wind_direction_10m,relative_humidity_2m,weather_code",
     daily:
@@ -185,6 +185,10 @@ async function openMeteoForecast({ lat, lon, label }) {
       feelsLikeC: Math.round(cur.apparent_temperature ?? cur.temperature_2m),
       humidity: Math.round(cur.relative_humidity_2m ?? 0),
       windKmh: Math.round(cur.wind_speed_10m ?? 0),
+      windGustKmh: Math.round(cur.wind_gusts_10m ?? 0),
+      windAlt80Kmh: Math.round(cur.wind_speed_80m ?? 0),
+      windAlt120Kmh: Math.round(cur.wind_speed_120m ?? 0),
+      windAlt180Kmh: Math.round(cur.wind_speed_180m ?? 0),
       condition: curDesc.condition,
       conditionLabel: curDesc.label,
       icon: curDesc.icon,
@@ -243,6 +247,8 @@ async function mockForecast({ lat, lon, label }) {
     };
   });
 
+  // Vento base (10 m) e derivados em altitude/rajada — realistas para testar o card.
+  const mWind = Math.round(8 + Math.random() * 50); // 8..58 km/h
   return {
     location: { lat, lon, label },
     observedAt: now.toISOString(),
@@ -250,7 +256,11 @@ async function mockForecast({ lat, lon, label }) {
       tempC: Math.round(20 + Math.random() * 8),
       feelsLikeC: Math.round(20 + Math.random() * 8),
       humidity: Math.round(50 + Math.random() * 45),
-      windKmh: Math.round(Math.random() * 30),
+      windKmh: mWind,
+      windGustKmh: Math.round(mWind * 1.5),
+      windAlt80Kmh: Math.round(mWind * 1.3),
+      windAlt120Kmh: Math.round(mWind * 1.5),
+      windAlt180Kmh: Math.round(mWind * 1.7),
       condition: pick.code,
       conditionLabel: pick.label,
       icon: pick.icon,
