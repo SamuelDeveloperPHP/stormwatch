@@ -550,15 +550,31 @@ export function StrikeList({
   filter,
   onFilterChange,
   onOpenInfo,
+  activeSite,
+  userLocationName,
 }: {
   snapshot: MonitorSnapshot | null;
   filter: StrikeFilter;
   onFilterChange: (f: StrikeFilter) => void;
   onOpenInfo?: () => void;
+  activeSite?: MonitorSite | null;
+  userLocationName?: string;
 }) {
   const strikes = snapshot?.strikes ?? [];
 
-  const filteredStrikes = strikes.filter((s) => {
+  const refLat = activeSite ? activeSite.lat : (snapshot?.location.lat ?? -25.5306);
+  const refLon = activeSite ? activeSite.lon : (snapshot?.location.lon ?? -49.2939);
+  const locationTitle = activeSite ? activeSite.name : (userLocationName || "Sua Geolocalização");
+  const criticalRadius = activeSite ? activeSite.criticalRadiusKm : (snapshot?.radiusKm ?? 8);
+  const alertRadius = activeSite ? activeSite.alertRadiusKm : Math.max(snapshot?.radiusKm ?? 15, 15);
+
+  // Recalcula distâncias e ordena em relação às coordenadas da localidade selecionada
+  const strikesWithDistance = strikes.map((s) => ({
+    ...s,
+    distanceKm: Math.round(getDistanceKm(refLat, refLon, s.lat, s.lon) * 100) / 100,
+  })).sort((a, b) => a.distanceKm - b.distanceKm);
+
+  const filteredStrikes = strikesWithDistance.filter((s) => {
     if (filter === "cg") return s.type === "CG";
     if (filter === "high_intensity") return Math.abs(s.peakAmpKa || 0) >= 30;
     return true;
@@ -568,7 +584,9 @@ export function StrikeList({
     <div className="card">
       <div className="strike-list-header">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <h3>Raios recentes</h3>
+          <h3 style={{ fontSize: 13, textTransform: "uppercase" }}>
+            Raios recentes <small style={{ color: "#0284c7", textTransform: "none", fontWeight: 700 }}>· {locationTitle}</small>
+          </h3>
           {onOpenInfo && (
             <button className="info-guide-btn" onClick={onOpenInfo} title="Como ler a lista e intensidade dos raios">
               <InfoIcon size={14} style={{ marginRight: 4 }} />Guia
@@ -577,7 +595,6 @@ export function StrikeList({
         </div>
         <span className="strike-count">{filteredStrikes.length}</span>
       </div>
-
 
       <div className="filter-chips">
         <button
@@ -607,7 +624,8 @@ export function StrikeList({
       ) : (
         <div className="strike-list" style={{ marginTop: 10 }}>
           {filteredStrikes.map((s) => {
-            const near = s.distanceKm <= (snapshot?.radiusKm ?? 8);
+            const isCritical = s.distanceKm <= criticalRadius;
+            const isAlert = !isCritical && s.distanceKm <= alertRadius;
             const when = new Date(s.timestamp).toLocaleTimeString("pt-BR", {
               hour: "2-digit",
               minute: "2-digit",
@@ -620,7 +638,14 @@ export function StrikeList({
             return (
               <div
                 key={s.id}
-                className={`strike-row ${near ? "strike-row--near" : ""}`}
+                className={`strike-row ${isCritical ? "strike-row--near" : ""}`}
+                style={{
+                  borderLeft: isCritical
+                    ? "3px solid #ef4444"
+                    : isAlert
+                    ? "3px solid #facc15"
+                    : undefined,
+                }}
               >
                 <span className="strike-dist">{s.distanceKm} km</span>
                 <span className="strike-type">
