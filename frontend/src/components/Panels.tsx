@@ -617,7 +617,11 @@ export function StrikeList({
         </button>
       </div>
 
-      {!snapshot || filteredStrikes.length === 0 ? (
+      {!snapshot ? (
+        <p className="muted" style={{ marginTop: 10 }}>
+          Carregando raios de {locationTitle}…
+        </p>
+      ) : filteredStrikes.length === 0 ? (
         <p className="muted" style={{ marginTop: 10 }}>
           Nenhum raio encontrado com os filtros selecionados.
         </p>
