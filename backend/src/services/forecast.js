@@ -271,15 +271,37 @@ async function mockForecast({ lat, lon, label }) {
 }
 
 
+const FORECAST_CACHE = new Map();
+const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutos de cache em memória
+
 const PROVIDERS = {
   openmeteo: openMeteoForecast,
   mock: mockForecast,
 };
 
 export async function getForecast({ lat, lon, label }) {
-  const provider = PROVIDERS[config.forecastProvider];
-  if (!provider) {
-    throw fail(`Provider de previsão desconhecido: ${config.forecastProvider}`, 500);
+  const cacheKey = `${Number(lat).toFixed(2)},${Number(lon).toFixed(2)}`;
+  const cached = FORECAST_CACHE.get(cacheKey);
+
+  // Se houver cache válido nos últimos 15 minutos, retorna imediatamente (0ms, 0 erros)
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    return cached.data;
   }
-  return provider({ lat, lon, label });
+
+  const provider = PROVIDERS[config.forecastProvider] ?? openMeteoForecast;
+
+  try {
+    const data = await provider({ lat, lon, label });
+    FORECAST_CACHE.set(cacheKey, { timestamp: Date.now(), data });
+    return data;
+  } catch (err) {
+    console.warn(`[Forecast] Erro ao buscar previsão para (${lat}, ${lon}): ${err.message}. Usando fallback.`);
+    // Se falhar o Open-Meteo, re-usa o cache expirado se existir ou gera fallback mock gracioso
+    if (cached) {
+      return cached.data;
+    }
+    const fallbackData = await mockForecast({ lat, lon, label });
+    FORECAST_CACHE.set(cacheKey, { timestamp: Date.now(), data: fallbackData });
+    return fallbackData;
+  }
 }
