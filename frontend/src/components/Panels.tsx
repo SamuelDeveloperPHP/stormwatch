@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from "react";
-import type { Forecast, MonitorSnapshot, StrikeFilter } from "../types.ts";
+import type { Forecast, MonitorSnapshot, Strike, StrikeFilter } from "../types.ts";
+import type { MonitorSite } from "../locations.ts";
 import WindAlertCard from "./WindAlertCard.tsx";
 
 // ── Ícones vetoriais minimalistas (estilo dashboard/BI) ────────────────────
@@ -109,25 +110,92 @@ function fmtCountdown(sec: number): string {
 }
 
 /**
- * Painel de status dirigido pelo estado de SEGURANÇA (autoritativo, vindo do
- * monitor server-side). Fail-safe: se a busca falhar, o monitor estiver
- * degradado ou ainda inicializando, mostra "MONITORAMENTO INDISPONÍVEL" —
- * nunca "seguro" quando não há como confirmar.
+ * Painel de status dirigido pelo estado de SEGURANÇA.
+ * Suporta o status autoritativo do usuário ou a análise por localidade selecionada.
+ */
+
+function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+export function calculateSiteSafety(
+  siteLat: number,
+  siteLon: number,
+  criticalRadiusKm: number,
+  alertRadiusKm: number,
+  strikes: Strike[],
+  regionStrikes: [number, number][]
+) {
+  let closestKm = Infinity;
+  let inZoneCount = 0;
+
+  for (const s of strikes) {
+    const d = getDistanceKm(siteLat, siteLon, s.lat, s.lon);
+    if (d < closestKm) closestKm = d;
+    if (d <= criticalRadiusKm) inZoneCount++;
+  }
+
+  for (const [rLat, rLon] of regionStrikes) {
+    const d = getDistanceKm(siteLat, siteLon, rLat, rLon);
+    if (d < closestKm) closestKm = d;
+    if (d <= criticalRadiusKm) inZoneCount++;
+  }
+
+  const isDanger = inZoneCount > 0;
+  const isAlert = !isDanger && closestKm <= alertRadiusKm;
+
+  return {
+    level: isDanger ? ("danger" as const) : isAlert ? ("alert" as const) : ("safe" as const),
+    closestKm: closestKm === Infinity ? null : Math.round(closestKm * 10) / 10,
+    inZoneCount,
+    triggerKm: criticalRadiusKm,
+    alertRadiusKm,
+  };
+}
+
+/**
+ * Painel de status dirigido pelo estado de SEGURANÇA.
+ * Suporta o status autoritativo do usuário ou a análise por localidade selecionada.
  */
 export function StatusPanel({
   snapshot,
   feedError,
+  siteSafety,
+  locationName,
 }: {
   snapshot: MonitorSnapshot | null;
   feedError?: boolean;
+  siteSafety?: {
+    level: "safe" | "danger" | "alert" | "degraded";
+    closestKm: number | null;
+    inZoneCount: number;
+    triggerKm: number;
+    alertRadiusKm?: number;
+  } | null;
+  locationName?: string;
 }) {
-  const safety = snapshot?.safety;
+  const locLabel = locationName || "sua localização";
+  const safety = siteSafety || (snapshot?.safety ? {
+    level: snapshot.safety.level === "init" || snapshot.safety.level === "degraded" ? ("degraded" as const) : snapshot.safety.level as "safe" | "danger",
+    closestKm: snapshot.safety.closestKm,
+    inZoneCount: snapshot.safety.inZoneCount,
+    triggerKm: snapshot.safety.triggerKm,
+  } : null);
+
   const unavailable =
     feedError ||
     !safety ||
-    safety.level === "init" ||
-    safety.level === "degraded" ||
-    safety.feedOk === false;
+    safety.level === "degraded";
 
   if (unavailable) {
     return (
@@ -137,14 +205,8 @@ export function StatusPanel({
           Monitoramento indisponível
         </div>
         <div className="status-sub">
-          Sem dados de raios atualizados. Trate a área como <strong>insegura</strong> e
-          use o protocolo manual (trovão / observação visual).
+          Sem dados de raios atualizados para {locLabel}. Trate a área como <strong>insegura</strong>.
         </div>
-        {safety?.dataAgeSec != null && (
-          <div className="status-sub" style={{ marginTop: 6 }}>
-            Último dado há {safety.dataAgeSec}s.
-          </div>
-        )}
       </div>
     );
   }
@@ -154,17 +216,31 @@ export function StatusPanel({
       <div className="status status--danger">
         <div className="status-label">
           <StopIcon size={17} style={{ marginRight: 7, verticalAlign: "-3px" }} />
-          PARAR ATIVIDADES
+          PARAR ATIVIDADES {locationName ? `EM ${locationName.toUpperCase()}` : ""}
         </div>
         <div className="status-sub">
           Raio a <strong>{safety.closestKm} km</strong> · {safety.inZoneCount} na zona de
-          risco ({safety.triggerKm} km).
+          risco crítica ({safety.triggerKm} km).
         </div>
         <div className="status-sub" style={{ marginTop: 6 }}>
-          Suspender atividades externas e buscar abrigo.
-          {safety.allClearInSec != null && (
-            <> Liberação em {fmtCountdown(safety.allClearInSec)} se não houver novos raios.</>
-          )}
+          Suspender atividades externas no local e buscar abrigo seguro imediatamente.
+        </div>
+      </div>
+    );
+  }
+
+  if (safety.level === "alert") {
+    return (
+      <div className="status status--warning" style={{ background: "#fef3c7", borderColor: "#f59e0b", color: "#92400e", padding: 14, borderRadius: 14 }}>
+        <div className="status-label" style={{ color: "#b45309", fontWeight: 800, fontSize: 15, display: "flex", alignItems: "center" }}>
+          <WarnIcon size={17} style={{ marginRight: 7 }} />
+          ATENÇÃO {locationName ? `EM ${locationName.toUpperCase()}` : ""}
+        </div>
+        <div className="status-sub" style={{ marginTop: 4, color: "#78350f" }}>
+          Raio detectado no Raio de Alerta: <strong>{safety.closestKm} km</strong> do local.
+        </div>
+        <div className="status-sub" style={{ marginTop: 4, color: "#78350f", fontSize: 11 }}>
+          Monitore o radar com atenção. Equipes de prontidão.
         </div>
       </div>
     );
@@ -178,12 +254,11 @@ export function StatusPanel({
         Área segura
       </div>
       <div className="status-sub">
-        Nenhum raio dentro de {safety.triggerKm} km da sua localização.
+        Nenhum raio dentro do raio de alerta em {locLabel}.
       </div>
       {safety.closestKm != null && (
         <div className="status-sub" style={{ marginTop: 8 }}>
           Raio mais próximo: <strong>{safety.closestKm} km</strong>
-          {safety.dataAgeSec != null && <> · dado há {safety.dataAgeSec}s</>}
         </div>
       )}
     </div>
@@ -325,6 +400,145 @@ export function ForecastPanel({ forecast, place }: { forecast: Forecast | null; 
             </span>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+export function AllLocationsSummaryPanel({
+  userPlace,
+  userSafety,
+  userWeather,
+  sites,
+  strikes,
+  regionStrikes,
+  selectedId,
+  onSelectSite,
+  onOpenAdd,
+}: {
+  userPlace: string;
+  userSafety: any;
+  userWeather: any;
+  sites: MonitorSite[];
+  strikes: Strike[];
+  regionStrikes: [number, number][];
+  selectedId: string | null;
+  onSelectSite: (id: string | null) => void;
+  onOpenAdd: () => void;
+}) {
+  if (sites.length === 0) return null;
+
+  return (
+    <div className="card all-sites-summary-card" style={{ marginTop: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+        <h3 style={{ margin: 0, fontSize: 12, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--ink-soft)" }}>
+          📍 Resumo dos Locais ({sites.length + 1})
+        </h3>
+        <button
+          onClick={onOpenAdd}
+          style={{ background: "none", border: "none", color: "#0284c7", fontWeight: 700, fontSize: 11, cursor: "pointer", padding: 0 }}
+        >
+          + Gerenciar
+        </button>
+      </div>
+
+      <div className="sites-summary-list" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        {/* User Geolocation Item */}
+        <div
+          className={`site-summary-item ${selectedId === null ? "active" : ""}`}
+          onClick={() => onSelectSite(null)}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "8px 10px",
+            borderRadius: 8,
+            background: selectedId === null ? "rgba(16, 185, 129, 0.12)" : "var(--bg-elev)",
+            border: selectedId === null ? "1px solid #10b981" : "1px solid var(--line)",
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 14 }}>🟢</span>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)" }}>
+                {userPlace || "Sua Geolocalização"}
+              </div>
+              <div style={{ fontSize: 10, color: "var(--ink-soft)" }}>
+                {userWeather ? `${userWeather.tempC}°C · ${userWeather.conditionLabel}` : "Localização Atual"}
+              </div>
+            </div>
+          </div>
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 800,
+              padding: "2px 6px",
+              borderRadius: 4,
+              background: userSafety?.level === "danger" ? "#fee2e2" : userSafety?.level === "alert" ? "#fef3c7" : "#d1fae5",
+              color: userSafety?.level === "danger" ? "#dc2626" : userSafety?.level === "alert" ? "#b45309" : "#047857",
+            }}
+          >
+            {userSafety?.level === "danger" ? "🔴 Perigo" : userSafety?.level === "alert" ? "⚡ Alerta" : "🟢 Seguro"}
+          </span>
+        </div>
+
+        {/* Registered Sites List */}
+        {sites.map((site) => {
+          const siteSafety = calculateSiteSafety(
+            site.lat,
+            site.lon,
+            site.criticalRadiusKm,
+            site.alertRadiusKm,
+            strikes,
+            regionStrikes
+          );
+
+          const isSelected = selectedId === site.id;
+
+          return (
+            <div
+              key={site.id}
+              className={`site-summary-item ${isSelected ? "active" : ""}`}
+              onClick={() => onSelectSite(site.id)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "8px 10px",
+                borderRadius: 8,
+                background: isSelected ? "rgba(2, 132, 199, 0.12)" : "var(--bg-elev)",
+                border: isSelected ? "1px solid #0284c7" : "1px solid var(--line)",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 14 }}>📍</span>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--ink)" }}>{site.name}</div>
+                  <div style={{ fontSize: 10, color: "var(--ink-soft)" }}>
+                    {site.category} · Raios: {site.criticalRadiusKm}/{site.alertRadiusKm} km
+                  </div>
+                </div>
+              </div>
+
+              <span
+                style={{
+                  fontSize: 10,
+                  fontWeight: 800,
+                  padding: "2px 6px",
+                  borderRadius: 4,
+                  background: siteSafety.level === "danger" ? "#fee2e2" : siteSafety.level === "alert" ? "#fef3c7" : "#d1fae5",
+                  color: siteSafety.level === "danger" ? "#dc2626" : siteSafety.level === "alert" ? "#b45309" : "#047857",
+                }}
+              >
+                {siteSafety.level === "danger" ? "🔴 Perigo" : siteSafety.level === "alert" ? "⚡ Alerta" : "🟢 Seguro"}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

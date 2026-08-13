@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { fetchForecast, fetchLightning, type Coords } from "./api.ts";
 import type { Forecast, MonitorSnapshot, StrikeFilter } from "./types.ts";
 import StormMap from "./components/StormMap.tsx";
-import { ForecastPanel, IntensitySummaryPanel, StatusPanel, StrikeList } from "./components/Panels.tsx";
+import { ForecastPanel, IntensitySummaryPanel, StatusPanel, StrikeList, AllLocationsSummaryPanel, calculateSiteSafety } from "./components/Panels.tsx";
 import TermsModal from "./components/TermsModal.tsx";
 import StrikeInfoModal from "./components/StrikeInfoModal.tsx";
 import LandingPage from "./components/LandingPage.tsx";
@@ -45,8 +45,11 @@ export default function App() {
 
   // Estado para o tema Dark / Light
   const [theme, setTheme] = useState<"dark" | "light">(() => {
-    return (localStorage.getItem("stormwatch_theme") as "dark" | "light") || "light";
+    return (localStorage.getItem("stormwatch_theme") as "dark" | "light") || "dark";
   });
+
+  // Estado para armazenar previsões de tempo de cada local monitorado
+  const [siteForecasts, setSiteForecasts] = useState<Record<string, Forecast>>({});
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -158,6 +161,19 @@ export default function App() {
     saveSites(sites);
   }, [sites]);
 
+  // Busca a previsão de tempo para o local selecionado quando ele muda
+  useEffect(() => {
+    if (!selectedSiteId) return;
+    const site = sites.find((s) => s.id === selectedSiteId);
+    if (!site) return;
+
+    fetchForecast({ lat: site.lat, lon: site.lon })
+      .then((fc) => {
+        setSiteForecasts((prev) => ({ ...prev, [site.id]: fc }));
+      })
+      .catch(() => {});
+  }, [selectedSiteId, sites]);
+
   const handleGenerateReport = (site: MonitorSite | null) => {
     if (!canGenerateReportToday()) {
       setReportUsedToday(true);
@@ -180,6 +196,19 @@ export default function App() {
       return () => clearTimeout(t);
     }
   }, [mobileTab]);
+
+  // Determina o local ativo para o painel esquerdo
+  const activeSite = selectedSiteId ? sites.find((s) => s.id === selectedSiteId) : null;
+  const activeForecast = activeSite ? (siteForecasts[activeSite.id] || null) : forecast;
+  const activeName = activeSite ? `${activeSite.name} (${activeSite.category})` : (place || snapshot?.location.label || "Sua Geolocalização");
+  const activeSiteSafety = activeSite ? calculateSiteSafety(
+    activeSite.lat,
+    activeSite.lon,
+    activeSite.criticalRadiusKm,
+    activeSite.alertRadiusKm,
+    snapshot?.strikes ?? [],
+    snapshot?.regionStrikes ?? []
+  ) : null;
 
   if (viewMode === "landing") {
     return (
@@ -211,11 +240,10 @@ export default function App() {
 
         <div className="topbar-loc">
           <span className="loc-pin" aria-hidden="true">📍</span>
-          <strong>{place || snapshot?.location.label || "—"}</strong>
+          <strong>{activeName}</strong>
           {snapshot && (
             <span className="loc-coords">
-              | geolocalização lat.:{" "}
-              {snapshot.location.lat.toFixed(4)}, long.: {snapshot.location.lon.toFixed(4)}
+              | {activeSite ? `lat.: ${activeSite.lat.toFixed(4)}, long.: ${activeSite.lon.toFixed(4)}` : `geolocalização lat.: ${snapshot.location.lat.toFixed(4)}, long.: ${snapshot.location.lon.toFixed(4)}`}
             </span>
           )}
         </div>
@@ -227,7 +255,7 @@ export default function App() {
             style={{ background: "#0284c7", color: "#ffffff", border: "none", fontWeight: 700 }}
             title="Locais de monitoramento"
           >
-            ☰ Locais
+            ☰ Locais ({sites.length})
           </button>
           <button
             className="theme-toggle-btn"
@@ -282,9 +310,70 @@ export default function App() {
         <div className="sidebar-col sidebar-col1">
           {error && <div className="error-banner">{error}</div>}
           {geoNote && <div className="geo-note">{geoNote}</div>}
-          <StatusPanel snapshot={snapshot} feedError={!!error} />
+
+          {/* Barra de Seleção de Localidades */}
+          <div className="location-nav-header card">
+            <div className="location-nav-label">
+              <span>📍 LOCAL SELECIONADO:</span>
+              <button className="location-manage-btn" onClick={() => setIsLocationsOpen(true)}>
+                ☰ Gerenciar
+              </button>
+            </div>
+            <div className="location-tabs-scroll">
+              <button
+                className={`location-tab-chip ${selectedSiteId === null ? "active" : ""}`}
+                onClick={() => setSelectedSiteId(null)}
+              >
+                <span className="tab-status-dot green" />
+                🟢 Sua Geolocalização
+              </button>
+              {sites.map((site) => {
+                const siteSafety = calculateSiteSafety(
+                  site.lat,
+                  site.lon,
+                  site.criticalRadiusKm,
+                  site.alertRadiusKm,
+                  snapshot?.strikes ?? [],
+                  snapshot?.regionStrikes ?? []
+                );
+                const dotColor = siteSafety.level === "danger" ? "red" : siteSafety.level === "alert" ? "yellow" : "green";
+
+                return (
+                  <button
+                    key={site.id}
+                    className={`location-tab-chip ${selectedSiteId === site.id ? "active" : ""}`}
+                    onClick={() => setSelectedSiteId(site.id)}
+                  >
+                    <span className={`tab-status-dot ${dotColor}`} />
+                    📍 {site.name}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <StatusPanel
+            snapshot={snapshot}
+            feedError={!!error}
+            siteSafety={activeSiteSafety}
+            locationName={activeSite ? activeSite.name : undefined}
+          />
+
           <IntensitySummaryPanel snapshot={snapshot} onOpenInfo={() => setIsInfoOpen(true)} />
-          <ForecastPanel forecast={forecast} />
+
+          <ForecastPanel forecast={activeForecast} place={activeName} />
+
+          <AllLocationsSummaryPanel
+            userPlace={place || snapshot?.location.label || "Sua Geolocalização"}
+            userSafety={snapshot?.safety}
+            userWeather={forecast?.current}
+            sites={sites}
+            strikes={snapshot?.strikes ?? []}
+            regionStrikes={snapshot?.regionStrikes ?? []}
+            selectedId={selectedSiteId}
+            onSelectSite={setSelectedSiteId}
+            onOpenAdd={() => setIsLocationsOpen(true)}
+          />
         </div>
 
         <div className="sidebar-col sidebar-col2">
