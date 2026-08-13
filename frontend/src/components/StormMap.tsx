@@ -335,13 +335,17 @@ function RadarSweepLayer({
         const cosLat = Math.cos((lat * Math.PI) / 180);
         const radius = radiusRef.current;
         for (const s of strikesRef.current) {
+          const distToCenter = getDistanceKm(lat, lon, s.lat, s.lon);
+          // Apenas ilumina o rastro do radar se o raio estiver ESTRITAMENTE DENTRO do raio de alerta do local!
+          if (distToCenter > radius) continue;
+
           const beta = Math.atan2((s.lon - lon) * cosLat, s.lat - lat);
           let phase = (theta - beta) % (Math.PI * 2);
           if (phase < 0) phase += Math.PI * 2;
           const intensity = 1 - phase / FADE;
           if (intensity <= 0.02) continue;
           const p = map.latLngToContainerPoint([s.lat, s.lon]);
-          const rgb = s.distanceKm <= radius ? "239, 68, 68" : "245, 158, 11";
+          const rgb = distToCenter <= (radius * 0.5) ? "239, 68, 68" : "250, 204, 21";
           const rad = 5 + 16 * intensity;
           const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad);
           g.addColorStop(0, `rgba(${rgb}, ${0.6 * intensity})`);
