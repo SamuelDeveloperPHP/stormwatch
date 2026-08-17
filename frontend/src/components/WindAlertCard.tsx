@@ -94,7 +94,7 @@ export default function WindAlertCard({ forecast }: { forecast: Forecast }) {
   const values = series.map((p) => p.value);
   const n = values.length;
 
-  // Mensagem de retomada das atividades.
+  // Mensagem informativa sobre a janela de vento (sem orientação de ação).
   let msg: string;
   if (level === "safe") {
     const peak = series.reduce(
@@ -103,13 +103,13 @@ export default function WindAlertCard({ forecast }: { forecast: Forecast }) {
     );
     msg =
       peak.value >= WIND_ATTENTION_KMH
-        ? `Vento normal agora, mas sobe para ~${peak.value} km/h por volta das ${peak.label} — programe as atividades em altura.`
-        : "Vento dentro do normal para trabalhos em altura nas próximas horas.";
+        ? `Vento normal agora; sobe para ~${peak.value} km/h por volta das ${peak.label}.`
+        : "Vento dentro da faixa normal nas próximas horas.";
   } else {
     const safeAgain = series.find((p) => p.value < WIND_ATTENTION_KMH);
     msg = safeAgain
-      ? `Condições devem melhorar por volta das ${safeAgain.label} (abaixo de ${WIND_ATTENTION_KMH} km/h) — reavaliar a retomada das atividades.`
-      : `Vento forte previsto nas próximas ${n} h — sem janela segura no horizonte; manter gruas e içamento suspensos.`;
+      ? `Vento tende a cair abaixo de ${WIND_ATTENTION_KMH} km/h por volta das ${safeAgain.label}.`
+      : `Vento forte previsto nas próximas ${n} h — acima de ${WIND_ATTENTION_KMH} km/h em todo o horizonte.`;
   }
 
   const suggestedMax = Math.max(70, (values.length ? Math.max(...values) : 0) + 8);

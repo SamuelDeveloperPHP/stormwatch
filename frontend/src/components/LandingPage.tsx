@@ -89,8 +89,8 @@ export default function LandingPage({
               Prevenção meteorológica de <span className="text-gradient">alta precisão</span>
             </h1>
             <p className="hero-subtitle">
-              Monitore descargas atmosféricas em tempo real, proteja suas equipes no
-              campo, automatize alertas de paralisação e gere relatórios de telemetria.
+              Monitore descargas atmosféricas em tempo real, acompanhe o risco às suas
+              equipes no campo, automatize alertas de risco e gere relatórios de telemetria.
             </p>
             <div className="hero-cta-group">
               <button className="btn-hero-primary" onClick={onOpenApp}>
@@ -110,10 +110,10 @@ export default function LandingPage({
 
             <div className="hero-status-pills">
               <span className="hero-pill hero-pill--stop">
-                <StopIcon size={14} style={{ marginRight: 6 }} />PARAR · raio ≤ 8 km
+                <StopIcon size={14} style={{ marginRight: 6 }} />RISCO CRÍTICO · raio ≤ 8 km
               </span>
               <span className="hero-pill hero-pill--clear">
-                <ShieldCheckIcon size={14} style={{ marginRight: 6 }} />LIBERADO · tudo limpo 30 min
+                <ShieldCheckIcon size={14} style={{ marginRight: 6 }} />SEM RAIOS · 30 min na zona
               </span>
             </div>
           </div>
@@ -183,7 +183,7 @@ export default function LandingPage({
                   }`}
                 >
                   {current?.condition === "thunderstorm" ? (
-                    <><StopIcon size={14} style={{ marginRight: 6 }} />Risco de Raios — sugerir paralisação</>
+                    <><StopIcon size={14} style={{ marginRight: 6 }} />Risco de Raios — zona crítica</>
                   ) : current?.condition === "rain" ? (
                     <><WarnIcon size={14} style={{ marginRight: 6 }} />Atenção: Janela de Chuva</>
                   ) : (
@@ -309,7 +309,7 @@ export default function LandingPage({
             </div>
             <h3>Construção Civil & Gruas</h3>
             <p>
-              Alertas de paralisação para trabalhos em andaimes, estaiamento e operação de guindastes, em apoio à NR-18.
+              Monitoramento de risco de raios e vento para trabalhos em andaimes, estaiamento e operação de guindastes, em apoio à NR-18.
             </p>
             <ul>
               <li><CheckIcon />Alertas por raio de aproximação (8 km / 15 km)</li>
@@ -324,10 +324,10 @@ export default function LandingPage({
             </div>
             <h3>Shows & Eventos ao Ar Livre</h3>
             <p>
-              Proteção de multidões, palcos e estruturas temporárias. Cronômetro "Tudo Limpo" para retomada segura da programação.
+              Monitoramento para multidões, palcos e estruturas temporárias. Cronômetro de 30 min sem novos raios na zona.
             </p>
             <ul>
-              <li><CheckIcon />Cronômetro de liberação (All-Clear 30 min)</li>
+              <li><CheckIcon />Cronômetro 30 min sem novos raios (All-Clear)</li>
               <li><CheckIcon />Alertas de rajadas repentinas de vento</li>
               <li><CheckIcon />Disparo de emergência para brigadistas</li>
             </ul>
@@ -344,7 +344,7 @@ export default function LandingPage({
             <ul>
               <li><CheckIcon />Densidade e proximidade das descargas</li>
               <li><CheckIcon />Detecção de raio total via satélite (GLM)</li>
-              <li><CheckIcon />Relatórios de telemetria de paralisação</li>
+              <li><CheckIcon />Relatórios de telemetria de eventos</li>
             </ul>
           </div>
         </div>
@@ -373,7 +373,7 @@ export default function LandingPage({
               <li><CheckIcon />Contagem e proximidade das descargas</li>
               <li><CheckIcon />Previsão do tempo Open-Meteo</li>
               <li><CheckIcon />Geofencing por local (8 km e 15 km)</li>
-              <li><CheckIcon />Cronômetro "Tudo Limpo" (30 min)</li>
+              <li><CheckIcon />Cronômetro 30 min sem novos raios</li>
               <li><CheckIcon />Alertas de vento em altitude e rajadas</li>
               <li><CheckIcon />Adicionar até 3 localizações</li>
               <li>

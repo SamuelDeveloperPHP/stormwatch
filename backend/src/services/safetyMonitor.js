@@ -9,8 +9,8 @@ import { postWebhook } from "./alerts.js";
  * Roda continuamente (independente de haver app aberto), avalia a proximidade
  * de raios ao canteiro e dispara eventos por webhook nas TRANSIÇÕES de estado:
  *
- *   safe     -> danger   : "⛔ PARAR ATIVIDADES"
- *   danger   -> safe      : "✅ LIBERADO" (após ALL_CLEAR_MIN sem raio na zona)
+ *   safe     -> danger   : "⛔ RISCO CRÍTICO"
+ *   danger   -> safe      : "✅ SEM RAIOS NA ZONA" (após ALL_CLEAR_MIN sem raio na zona)
  *   *        -> degraded  : "⚠️ MONITORAMENTO INDISPONÍVEL" (fail-safe)
  *
  * Princípios de segurança:
@@ -81,9 +81,9 @@ function dispatch(from, to) {
       closestKm: state.closestKm,
       count: state.inZoneCount,
       message:
-        `⛔ PARAR ATIVIDADES — ${loc}\n` +
+        `⛔ RISCO CRÍTICO — ${loc}\n` +
         `Raio a ${state.closestKm} km (zona de risco de ${triggerKm} km).\n` +
-        `Suspender atividades externas imediatamente e buscar abrigo.`,
+        `${state.inZoneCount} descarga(s) na zona de risco crítica.`,
     });
   }
   if (to === "safe" && from === "danger") {
@@ -93,9 +93,8 @@ function dispatch(from, to) {
       generatedAt: at,
       location: loc,
       message:
-        `✅ LIBERADO — ${loc}\n` +
-        `Sem raios na zona de risco há ${config.allClearMin} min. ` +
-        `Atividades podem ser retomadas com atenção.`,
+        `✅ SEM RAIOS NA ZONA — ${loc}\n` +
+        `Sem raios na zona de risco há ${config.allClearMin} min.`,
     });
   }
   if (to === "safe" && from === "degraded") {
@@ -115,8 +114,7 @@ function dispatch(from, to) {
       location: loc,
       message:
         `⚠️ MONITORAMENTO INDISPONÍVEL — ${loc}\n` +
-        `Sem dados de raios atualizados. Trate a área como INSEGURA e use o ` +
-        `protocolo manual (trovão/observação visual).`,
+        `Sem dados de raios atualizados.`,
     });
   }
   return Promise.resolve();
