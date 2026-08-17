@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import type { Forecast, MonitorSnapshot, Strike, StrikeFilter } from "../types.ts";
+import type { Forecast, MonitorSnapshot, SiteSafety, Strike, StrikeFilter } from "../types.ts";
 import type { MonitorSite } from "../locations.ts";
 import WindAlertCard from "./WindAlertCard.tsx";
 
@@ -103,10 +103,44 @@ function RainDropIcon({ size = 12, style }: IcoProps) {
   );
 }
 
-function fmtCountdown(sec: number): string {
+export function fmtCountdown(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = sec % 60;
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+/** Compacto para chips/resumo: "28m" (arredonda p/ cima) ou "45s". */
+export function fmtCountdownShort(sec: number): string {
+  return sec >= 60 ? `${Math.ceil(sec / 60)}m` : `${sec}s`;
+}
+
+/**
+ * Desconta ao vivo os segundos passados desde a última resposta do backend, para
+ * o cronômetro descer suave entre os polls de 30s. Nunca abaixo de 0.
+ */
+export function liveAllClear(
+  allClearInSec: number | null | undefined,
+  fetchedAt: number,
+  now: number
+): number | null {
+  if (allClearInSec == null) return null;
+  const elapsed = Math.max(0, Math.floor((now - fetchedAt) / 1000));
+  return Math.max(0, allClearInSec - elapsed);
+}
+
+const LEVEL_RANK: Record<string, number> = { safe: 0, alert: 1, danger: 2 };
+
+/**
+ * Nível MAIS severo entre dois — para não regredir a detecção espacial (dados de
+ * toda a região) quando a contagem do backend (armazém ~120 km) não cobre um
+ * local muito distante. Erra para o lado seguro: nunca rebaixa um alerta real.
+ */
+export function moreSevereLevel(
+  a?: string,
+  b?: string
+): "safe" | "alert" | "danger" {
+  const r = Math.max(LEVEL_RANK[a ?? "safe"] ?? 0, LEVEL_RANK[b ?? "safe"] ?? 0);
+  return r === 2 ? "danger" : r === 1 ? "alert" : "safe";
 }
 
 /**
@@ -164,38 +198,29 @@ export function calculateSiteSafety(
 }
 
 /**
- * Painel de status dirigido pelo estado de SEGURANÇA.
- * Suporta o status autoritativo do usuário ou a análise por localidade selecionada.
+ * Painel de status dirigido pelo estado de SEGURANÇA do local ativo.
+ * Recebe a segurança JÁ resolvida (backend por local) + a contagem regressiva
+ * ao vivo. `degraded` cobre feed indisponível/velho (fail-safe: área insegura).
  */
 export function StatusPanel({
-  snapshot,
-  feedError,
-  siteSafety,
+  safety,
+  allClearInSec,
+  degraded,
   locationName,
 }: {
-  snapshot: MonitorSnapshot | null;
-  feedError?: boolean;
-  siteSafety?: {
+  safety: {
     level: "safe" | "danger" | "alert" | "degraded";
     closestKm: number | null;
     inZoneCount: number;
     triggerKm: number;
     alertRadiusKm?: number;
   } | null;
+  allClearInSec?: number | null;
+  degraded?: boolean;
   locationName?: string;
 }) {
   const locLabel = locationName || "sua localização";
-  const safety = siteSafety || (snapshot?.safety ? {
-    level: snapshot.safety.level === "init" || snapshot.safety.level === "degraded" ? ("degraded" as const) : snapshot.safety.level as "safe" | "danger",
-    closestKm: snapshot.safety.closestKm,
-    inZoneCount: snapshot.safety.inZoneCount,
-    triggerKm: snapshot.safety.triggerKm,
-  } : null);
-
-  const unavailable =
-    feedError ||
-    !safety ||
-    safety.level === "degraded";
+  const unavailable = degraded || !safety || safety.level === "degraded";
 
   if (unavailable) {
     return (
@@ -225,6 +250,39 @@ export function StatusPanel({
         <div className="status-sub" style={{ marginTop: 6 }}>
           Suspender atividades externas no local e buscar abrigo seguro imediatamente.
         </div>
+        {allClearInSec != null && (
+          <div
+            className="status-countdown"
+            style={{
+              marginTop: 10,
+              paddingTop: 10,
+              borderTop: "1px solid rgba(255,255,255,0.28)",
+              fontSize: 13,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "baseline",
+              gap: 6,
+              flexWrap: "wrap",
+            }}
+          >
+            {allClearInSec > 0 ? (
+              <>
+                <span aria-hidden="true">⏳</span>
+                <span>
+                  Liberação em <strong style={{ fontVariantNumeric: "tabular-nums" }}>{fmtCountdown(allClearInSec)}</strong>
+                </span>
+                <span style={{ fontWeight: 500, opacity: 0.85 }}>
+                  — reinicia a cada novo raio na zona.
+                </span>
+              </>
+            ) : (
+              <>
+                <span aria-hidden="true">✓</span>
+                <span>Sem novos raios — confirmando liberação…</span>
+              </>
+            )}
+          </div>
+        )}
       </div>
     );
   }
@@ -415,6 +473,9 @@ export function AllLocationsSummaryPanel({
   selectedId,
   onSelectSite,
   onOpenAdd,
+  safetyById,
+  safetyFetchedAt,
+  nowMs,
 }: {
   userPlace: string;
   userSafety: any;
@@ -425,8 +486,37 @@ export function AllLocationsSummaryPanel({
   selectedId: string | null;
   onSelectSite: (id: string | null) => void;
   onOpenAdd: () => void;
+  safetyById: Record<string, SiteSafety>;
+  safetyFetchedAt: number;
+  nowMs: number;
 }) {
   if (sites.length === 0) return null;
+
+  // Selo de status com a contagem regressiva ao vivo (só no perigo).
+  const statusBadge = (level: string | undefined, allClearInSec: number | null | undefined) => {
+    const isDanger = level === "danger";
+    const isAlert = level === "alert";
+    const cd = isDanger ? liveAllClear(allClearInSec, safetyFetchedAt, nowMs) : null;
+    return (
+      <span
+        style={{
+          fontSize: 10,
+          fontWeight: 800,
+          padding: "2px 6px",
+          borderRadius: 4,
+          whiteSpace: "nowrap",
+          background: isDanger ? "#fee2e2" : isAlert ? "#fef3c7" : "#d1fae5",
+          color: isDanger ? "#dc2626" : isAlert ? "#b45309" : "#047857",
+        }}
+      >
+        {isDanger ? "🔴 Perigo" : isAlert ? "⚡ Alerta" : "🟢 Seguro"}
+        {cd != null && cd > 0 ? ` · ${fmtCountdownShort(cd)}` : ""}
+      </span>
+    );
+  };
+
+  const geoSafety = safetyById["geo"];
+  const geoLevel = geoSafety?.level ?? userSafety?.level;
 
   return (
     <div className="card all-sites-summary-card" style={{ marginTop: 12 }}>
@@ -470,23 +560,16 @@ export function AllLocationsSummaryPanel({
               </div>
             </div>
           </div>
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: 800,
-              padding: "2px 6px",
-              borderRadius: 4,
-              background: userSafety?.level === "danger" ? "#fee2e2" : userSafety?.level === "alert" ? "#fef3c7" : "#d1fae5",
-              color: userSafety?.level === "danger" ? "#dc2626" : userSafety?.level === "alert" ? "#b45309" : "#047857",
-            }}
-          >
-            {userSafety?.level === "danger" ? "🔴 Perigo" : userSafety?.level === "alert" ? "⚡ Alerta" : "🟢 Seguro"}
-          </span>
+          {statusBadge(geoLevel, geoSafety?.allClearInSec)}
         </div>
 
         {/* Registered Sites List */}
         {sites.map((site) => {
-          const siteSafety = calculateSiteSafety(
+          // Nível = o MAIS severo entre a detecção espacial regional (dados de toda
+          // a região, sem contagem) e a do backend (armazém, com contagem). A
+          // contagem regressiva vem sempre do backend.
+          const backendSafety = safetyById[site.id];
+          const spatial = calculateSiteSafety(
             site.lat,
             site.lon,
             site.criticalRadiusKm,
@@ -494,6 +577,7 @@ export function AllLocationsSummaryPanel({
             strikes,
             regionStrikes
           );
+          const level = moreSevereLevel(backendSafety?.level, spatial.level);
 
           const isSelected = selectedId === site.id;
 
@@ -524,18 +608,7 @@ export function AllLocationsSummaryPanel({
                 </div>
               </div>
 
-              <span
-                style={{
-                  fontSize: 10,
-                  fontWeight: 800,
-                  padding: "2px 6px",
-                  borderRadius: 4,
-                  background: siteSafety.level === "danger" ? "#fee2e2" : siteSafety.level === "alert" ? "#fef3c7" : "#d1fae5",
-                  color: siteSafety.level === "danger" ? "#dc2626" : siteSafety.level === "alert" ? "#b45309" : "#047857",
-                }}
-              >
-                {siteSafety.level === "danger" ? "🔴 Perigo" : siteSafety.level === "alert" ? "⚡ Alerta" : "🟢 Seguro"}
-              </span>
+              {statusBadge(level, backendSafety?.allClearInSec)}
             </div>
           );
         })}

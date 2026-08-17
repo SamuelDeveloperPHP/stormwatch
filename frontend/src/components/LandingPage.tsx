@@ -103,7 +103,7 @@ export default function LandingPage({
 
             <div className="hero-feature-chips">
               <span className="hero-chip"><span className="chip-dot" style={{ background: "#38bdf8" }} />NOAA GOES-19</span>
-              <span className="hero-chip"><span className="chip-dot" style={{ background: "#22c55e" }} />Alertas WhatsApp</span>
+              <span className="hero-chip"><span className="chip-dot" style={{ background: "#22c55e" }} />Alertas personalizados</span>
               <span className="hero-chip"><span className="chip-dot" style={{ background: "#f59e0b" }} />NR-18</span>
               <span className="hero-chip"><span className="chip-dot" style={{ background: "#a78bfa" }} />Relatório PDF</span>
             </div>
