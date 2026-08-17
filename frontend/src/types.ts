@@ -46,6 +46,28 @@ export interface SafetyState {
   since: string;
 }
 
+/** Segurança de UM local, calculada pelo backend a partir do armazém de 30 min. */
+export interface SiteSafety {
+  level: "safe" | "alert" | "danger";
+  closestKm: number | null;
+  inZoneCount: number;
+  triggerKm: number;
+  alertRadiusKm: number;
+  allClearMin: number;
+  /** Segundos até liberar (regra dos 30 min). Reinicia a cada novo raio na zona. */
+  allClearInSec: number | null;
+  lastStrikeInZoneAt: number | null;
+}
+
+/** Resposta do /safety/batch: segurança por local (geolocalização + locais salvos). */
+export interface SafetyBatchResponse {
+  evaluatedAt: string;
+  feedOk: boolean;
+  dataAgeSec: number | null;
+  allClearMin: number;
+  results: Record<string, SiteSafety>;
+}
+
 export interface HourlyPoint {
   time: string;
   hourLabel: string;

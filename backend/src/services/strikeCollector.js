@@ -18,16 +18,34 @@ import { ingest, purge, size } from "./strikeStore.js";
 
 const site = config.monitor;
 
+// Saúde do coletor — reflete o feed REAL que alimenta o armazém (respeita o
+// LIGHTNING_PROVIDER). O endpoint /safety/batch usa isto para o fail-safe:
+// coletor sem sucesso recente => tratar os locais como "monitoramento indisponível".
+const health = { lastRunAt: 0, lastOkAt: 0, ok: false, error: null };
+
+export function getCollectorHealth() {
+  const now = Date.now();
+  const dataAgeSec = health.lastOkAt ? Math.round((now - health.lastOkAt) / 1000) : null;
+  const feedOk = health.ok && dataAgeSec != null && dataAgeSec <= config.glmStaleSec;
+  return { feedOk, dataAgeSec, lastError: health.error };
+}
+
 async function collect() {
+  health.lastRunAt = Date.now();
   try {
     const all = await getRecentStrikes({ lat: site.lat, lon: site.lon });
     const near = all.filter((s) => s.distanceKm <= config.maxDisplayKm);
     const added = ingest(near);
     const removed = purge();
+    health.lastOkAt = Date.now();
+    health.ok = true;
+    health.error = null;
     if (added || removed) {
       logger.debug({ added, removed, total: size() }, "Armazém de raios atualizado");
     }
   } catch (err) {
+    health.ok = false;
+    health.error = err.message;
     logger.warn({ err: err.message }, "Coletor de raios falhou neste ciclo");
   }
 }

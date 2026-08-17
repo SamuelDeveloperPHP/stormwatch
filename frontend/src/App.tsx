@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchForecast, fetchLightning, type Coords } from "./api.ts";
-import type { Forecast, MonitorSnapshot, StrikeFilter } from "./types.ts";
+import { fetchForecast, fetchLightning, fetchSafetyBatch, type Coords, type SafetyPoint } from "./api.ts";
+import type { Forecast, MonitorSnapshot, SiteSafety, StrikeFilter } from "./types.ts";
 import StormMap from "./components/StormMap.tsx";
-import { ForecastPanel, IntensitySummaryPanel, StatusPanel, StrikeList, AllLocationsSummaryPanel, calculateSiteSafety } from "./components/Panels.tsx";
+import { ForecastPanel, IntensitySummaryPanel, StatusPanel, StrikeList, AllLocationsSummaryPanel, calculateSiteSafety, liveAllClear, fmtCountdownShort, moreSevereLevel } from "./components/Panels.tsx";
 import TermsModal from "./components/TermsModal.tsx";
+import ConsentGate from "./components/ConsentGate.tsx";
 import StrikeInfoModal from "./components/StrikeInfoModal.tsx";
 import LandingPage from "./components/LandingPage.tsx";
 import LocationsPanel from "./components/LocationsPanel.tsx";
@@ -40,12 +41,22 @@ export default function App() {
   // sem precisar reiniciar o setInterval quando a localização chega.
   const coordsRef = useRef<Coords | undefined>(undefined);
 
+  // Segurança POR LOCAL (geolocalização "geo" + cada local salvo), calculada pelo
+  // backend a partir do armazém de 30 min. Guardamos o instante da resposta para
+  // descontar a contagem regressiva ao vivo entre os polls de 30s.
+  const [safetyById, setSafetyById] = useState<Record<string, SiteSafety>>({});
+  const [safetyMeta, setSafetyMeta] = useState<{ feedOk: boolean; fetchedAt: number } | null>(null);
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  // Espelha a lista de locais para o tick de polling (criado uma vez) não ficar
+  // preso à lista inicial.
+  const sitesRef = useRef<MonitorSite[]>([]);
+
   // Estado para alternar entre Landing Page Comercial e o Monitor ao Vivo
   const [viewMode, setViewMode] = useState<"landing" | "monitor">("landing");
 
   // Estado para o tema Dark / Light
   const [theme, setTheme] = useState<"dark" | "light">(() => {
-    return (localStorage.getItem("stormwatch_theme") as "dark" | "light") || "dark";
+    return (localStorage.getItem("stormwatch_theme") as "dark" | "light") || "light";
   });
 
   // Estado para armazenar previsões de tempo de cada local monitorado
@@ -77,6 +88,31 @@ export default function App() {
     setIsTermsOpen(true);
   };
 
+  // Aceite obrigatório dos Termos — exibido UMA VEZ POR SESSÃO (sessionStorage):
+  // reaparece a cada nova visita/aba, mas não reincomoda ao recarregar em uso.
+  const [consentAccepted, setConsentAccepted] = useState(() => {
+    try {
+      return sessionStorage.getItem("stormwatch_consent") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const acceptConsent = () => {
+    try {
+      sessionStorage.setItem("stormwatch_consent", "1");
+    } catch {
+      /* modo privado pode bloquear o storage — segue aceito nesta sessão */
+    }
+    setConsentAccepted(true);
+  };
+
+  // Enquanto o portão está aberto: trava a rolagem de fundo e esconde os botões
+  // flutuantes (ex.: "Falar com Consultor"), pra nada ficar por cima do aceite.
+  useEffect(() => {
+    document.documentElement.classList.toggle("consent-locked", !consentAccepted);
+    return () => document.documentElement.classList.remove("consent-locked");
+  }, [consentAccepted]);
+
   async function tick() {
     try {
       const c = coordsRef.current;
@@ -84,6 +120,27 @@ export default function App() {
       setSnapshot(snap);
       setForecast(fc);
       setError(null);
+
+      // Segurança + contagem de tudo-limpo de todos os locais numa só chamada.
+      // Vem DEPOIS do fetchLightning (que já alimentou o armazém com a área do
+      // usuário). Uma falha aqui não derruba o resto da tela.
+      try {
+        const points: SafetyPoint[] = [
+          { id: "geo", lat: snap.location.lat, lon: snap.location.lon },
+          ...sitesRef.current.map((s) => ({
+            id: s.id,
+            lat: s.lat,
+            lon: s.lon,
+            criticalRadiusKm: s.criticalRadiusKm,
+            alertRadiusKm: s.alertRadiusKm,
+          })),
+        ];
+        const batch = await fetchSafetyBatch(points);
+        setSafetyById(batch.results);
+        setSafetyMeta({ feedOk: batch.feedOk, fetchedAt: Date.now() });
+      } catch {
+        /* mantém o último estado; a UI cai no fallback espacial por local */
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Falha ao buscar dados");
     }
@@ -116,6 +173,12 @@ export default function App() {
     return () => {
       if (timer.current) window.clearInterval(timer.current);
     };
+  }, []);
+
+  // Tique de 1s só para a contagem regressiva descer suave entre os polls de 30s.
+  useEffect(() => {
+    const id = window.setInterval(() => setNowMs(Date.now()), 1000);
+    return () => window.clearInterval(id);
   }, []);
 
   // Reverse geocoding: transforma lat/lon em "Cidade, UF" (API gratuita, sem chave).
@@ -161,6 +224,7 @@ export default function App() {
 
   useEffect(() => {
     saveSites(sites);
+    sitesRef.current = sites;
   }, [sites]);
 
   // Busca previsão + raios do local selecionado e mantém atualizado (mesmo passo
@@ -231,14 +295,49 @@ export default function App() {
   const activeForecast = activeSite ? (siteForecasts[activeSite.id] || null) : forecast;
   const activeSnapshot = activeSite ? (siteSnapshots[activeSite.id] || null) : snapshot;
   const activeName = activeSite ? `${activeSite.name} (${activeSite.category})` : (place || snapshot?.location.label || "Sua Geolocalização");
-  const activeSiteSafety = activeSite ? calculateSiteSafety(
-    activeSite.lat,
-    activeSite.lon,
-    activeSite.criticalRadiusKm,
-    activeSite.alertRadiusKm,
-    snapshot?.strikes ?? [],
-    snapshot?.regionStrikes ?? []
-  ) : null;
+
+  // Segurança do local ativo: preferimos o cálculo do backend POR LOCAL (traz a
+  // contagem de tudo-limpo). Enquanto o 1º batch não chega, caímos no cálculo
+  // espacial local (locais salvos) ou no estado autoritativo do servidor (geo).
+  const activeSafetyId = selectedSiteId ?? "geo";
+  const activeBackendSafety = safetyById[activeSafetyId] ?? null;
+  const activeSafety = activeBackendSafety
+    ? activeBackendSafety
+    : activeSite
+    ? calculateSiteSafety(
+        activeSite.lat,
+        activeSite.lon,
+        activeSite.criticalRadiusKm,
+        activeSite.alertRadiusKm,
+        snapshot?.strikes ?? [],
+        snapshot?.regionStrikes ?? []
+      )
+    : snapshot?.safety
+    ? {
+        level:
+          snapshot.safety.level === "init" || snapshot.safety.level === "degraded"
+            ? ("degraded" as const)
+            : (snapshot.safety.level as "safe" | "danger"),
+        closestKm: snapshot.safety.closestKm,
+        inZoneCount: snapshot.safety.inZoneCount,
+        triggerKm: snapshot.safety.triggerKm,
+      }
+    : null;
+  const activeAllClear = activeBackendSafety
+    ? liveAllClear(activeBackendSafety.allClearInSec, safetyMeta?.fetchedAt ?? 0, nowMs)
+    : null;
+
+  // Fail-safe global: coletor sem sucesso recente, ou nossa última leitura de
+  // segurança ficou obsoleta (> 90s) => "monitoramento indisponível".
+  const safetyStale = !!safetyMeta && nowMs - safetyMeta.fetchedAt > 90_000;
+  const degraded = !!error || (safetyMeta ? !safetyMeta.feedOk : false) || safetyStale;
+
+  // Sufixo de contagem regressiva para os chips de local (só quando em perigo).
+  const chipCountdown = (s: SiteSafety | undefined): string => {
+    if (!s || s.level !== "danger") return "";
+    const cd = liveAllClear(s.allClearInSec, safetyMeta?.fetchedAt ?? 0, nowMs);
+    return cd != null && cd > 0 ? ` · ⏳ ${fmtCountdownShort(cd)}` : "";
+  };
 
   if (viewMode === "landing") {
     return (
@@ -250,6 +349,7 @@ export default function App() {
           snapshot={snapshot}
           forecast={forecast}
         />
+        {!consentAccepted && <ConsentGate onAccept={acceptConsent} onOpenTerms={openTerms} />}
         <TermsModal
           isOpen={isTermsOpen}
           onClose={() => setIsTermsOpen(false)}
@@ -358,15 +458,24 @@ export default function App() {
               </button>
             </div>
             <div className="location-tabs-scroll">
-              <button
-                className={`location-tab-chip ${selectedSiteId === null ? "active" : ""}`}
-                onClick={() => setSelectedSiteId(null)}
-              >
-                <span className="tab-status-dot green" />
-                🟢 Sua Geolocalização
-              </button>
+              {(() => {
+                const geo = safetyById["geo"];
+                const dotColor = geo?.level === "danger" ? "red" : geo?.level === "alert" ? "yellow" : "green";
+                return (
+                  <button
+                    className={`location-tab-chip ${selectedSiteId === null ? "active" : ""}`}
+                    onClick={() => setSelectedSiteId(null)}
+                  >
+                    <span className={`tab-status-dot ${dotColor}`} />
+                    🟢 Sua Geolocalização{chipCountdown(geo)}
+                  </button>
+                );
+              })()}
               {sites.map((site) => {
-                const siteSafety = calculateSiteSafety(
+                // Nível = o mais severo entre a detecção espacial regional e a do
+                // backend (que traz a contagem). A contagem vem do backend (sv).
+                const sv = safetyById[site.id];
+                const spatial = calculateSiteSafety(
                   site.lat,
                   site.lon,
                   site.criticalRadiusKm,
@@ -374,7 +483,8 @@ export default function App() {
                   snapshot?.strikes ?? [],
                   snapshot?.regionStrikes ?? []
                 );
-                const dotColor = siteSafety.level === "danger" ? "red" : siteSafety.level === "alert" ? "yellow" : "green";
+                const level = moreSevereLevel(sv?.level, spatial.level);
+                const dotColor = level === "danger" ? "red" : level === "alert" ? "yellow" : "green";
 
                 return (
                   <button
@@ -383,7 +493,7 @@ export default function App() {
                     onClick={() => setSelectedSiteId(site.id)}
                   >
                     <span className={`tab-status-dot ${dotColor}`} />
-                    📍 {site.name}
+                    📍 {site.name}{chipCountdown(sv)}
                   </button>
                 );
               })}
@@ -391,9 +501,9 @@ export default function App() {
           </div>
 
           <StatusPanel
-            snapshot={snapshot}
-            feedError={!!error}
-            siteSafety={activeSiteSafety}
+            safety={activeSafety}
+            allClearInSec={activeAllClear}
+            degraded={degraded}
             locationName={activeSite ? activeSite.name : undefined}
           />
 
@@ -411,6 +521,9 @@ export default function App() {
             selectedId={selectedSiteId}
             onSelectSite={setSelectedSiteId}
             onOpenAdd={() => setIsLocationsOpen(true)}
+            safetyById={safetyById}
+            safetyFetchedAt={safetyMeta?.fetchedAt ?? 0}
+            nowMs={nowMs}
           />
         </div>
 
@@ -479,6 +592,8 @@ export default function App() {
       </aside>
 
       <StormMap snapshot={snapshot} filter={strikeFilter} theme={theme} sites={sites} selectedSiteId={selectedSiteId} />
+
+      {!consentAccepted && <ConsentGate onAccept={acceptConsent} onOpenTerms={openTerms} />}
 
       <TermsModal
         isOpen={isTermsOpen}

@@ -3370,3 +3370,94 @@ h1, h2, h3, h4 {
     max-width: 290px;
   }
 }
+
+/* ── Portão de consentimento (aceite obrigatório dos Termos) ─────────────── */
+/* Enquanto o portão está aberto: trava a rolagem e esconde botões flutuantes
+   (que ficam em z-index 9999) para nada sobrepor o aceite. */
+.consent-locked {
+  overflow: hidden;
+}
+.consent-locked .whatsapp-float-btn {
+  display: none !important;
+}
+
+/* z-index 9998: fica logo ABAIXO do modal de Termos (.modal-backdrop = 9999),
+   assim o usuário pode abrir os Termos completos por cima do portão. */
+.consent-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.82);
+  backdrop-filter: blur(10px);
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.consent-card {
+  background: var(--bg-elev);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
+  padding: 26px 26px 22px;
+  box-shadow: 0 30px 80px -20px rgba(0, 0, 0, 0.7);
+}
+.consent-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--ink);
+  margin: 0 0 16px;
+}
+.consent-alert {
+  margin: 0 0 4px;
+}
+.consent-links {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.consent-check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 20px;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--ink);
+  user-select: none;
+}
+.consent-check input {
+  margin-top: 2px;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  cursor: pointer;
+  accent-color: #0284c7;
+}
+.consent-footer {
+  margin-top: 22px;
+  display: flex;
+  justify-content: flex-end;
+}
+.consent-accept-btn {
+  background: #0284c7;
+  color: #ffffff;
+  border: none;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease, opacity 0.2s ease;
+}
+.consent-accept-btn:hover:not(:disabled) {
+  background: #0369a1;
+}
+.consent-accept-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
