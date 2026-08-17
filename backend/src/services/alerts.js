@@ -88,8 +88,7 @@ export async function dispatchAlert(alert) {
       `⚡ ALERTA DE RAIO — ${config.monitor.label}\n` +
       `Raio detectado a ${alert.closest.distanceKm} km ` +
       `(dentro do raio crítico de ${config.alertRadiusKm} km).\n` +
-      `${alert.count} descarga(s) próxima(s) nos últimos minutos.\n` +
-      `Recomenda-se suspender atividades externas.`,
+      `${alert.count} descarga(s) próxima(s) nos últimos minutos.`,
   };
 
   if (!config.alertWebhookUrl) {

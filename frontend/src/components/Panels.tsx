@@ -230,7 +230,7 @@ export function StatusPanel({
           Monitoramento indisponível
         </div>
         <div className="status-sub">
-          Sem dados de raios atualizados para {locLabel}. Trate a área como <strong>insegura</strong>.
+          Sem dados de raios atualizados para {locLabel}.
         </div>
       </div>
     );
@@ -241,14 +241,11 @@ export function StatusPanel({
       <div className="status status--danger">
         <div className="status-label">
           <StopIcon size={17} style={{ marginRight: 7, verticalAlign: "-3px" }} />
-          PARAR ATIVIDADES {locationName ? `EM ${locationName.toUpperCase()}` : ""}
+          RISCO CRÍTICO {locationName ? `EM ${locationName.toUpperCase()}` : ""}
         </div>
         <div className="status-sub">
           Raio a <strong>{safety.closestKm} km</strong> · {safety.inZoneCount} na zona de
           risco crítica ({safety.triggerKm} km).
-        </div>
-        <div className="status-sub" style={{ marginTop: 6 }}>
-          Suspender atividades externas no local e buscar abrigo seguro imediatamente.
         </div>
         {allClearInSec != null && (
           <div
@@ -269,16 +266,16 @@ export function StatusPanel({
               <>
                 <span aria-hidden="true">⏳</span>
                 <span>
-                  Liberação em <strong style={{ fontVariantNumeric: "tabular-nums" }}>{fmtCountdown(allClearInSec)}</strong>
+                  Faltam <strong style={{ fontVariantNumeric: "tabular-nums" }}>{fmtCountdown(allClearInSec)}</strong> para completar 30 min sem novos raios na zona
                 </span>
                 <span style={{ fontWeight: 500, opacity: 0.85 }}>
-                  — reinicia a cada novo raio na zona.
+                  · reinicia a cada novo raio detectado.
                 </span>
               </>
             ) : (
               <>
                 <span aria-hidden="true">✓</span>
-                <span>Sem novos raios — confirmando liberação…</span>
+                <span>30 min sem novos raios na zona.</span>
               </>
             )}
           </div>
@@ -292,13 +289,10 @@ export function StatusPanel({
       <div className="status status--warning" style={{ background: "#fef3c7", borderColor: "#f59e0b", color: "#92400e", padding: 14, borderRadius: 14 }}>
         <div className="status-label" style={{ color: "#b45309", fontWeight: 800, fontSize: 15, display: "flex", alignItems: "center" }}>
           <WarnIcon size={17} style={{ marginRight: 7 }} />
-          ATENÇÃO {locationName ? `EM ${locationName.toUpperCase()}` : ""}
+          RAIO PRÓXIMO {locationName ? `EM ${locationName.toUpperCase()}` : ""}
         </div>
         <div className="status-sub" style={{ marginTop: 4, color: "#78350f" }}>
           Raio detectado no Raio de Alerta: <strong>{safety.closestKm} km</strong> do local.
-        </div>
-        <div className="status-sub" style={{ marginTop: 4, color: "#78350f", fontSize: 11 }}>
-          Monitore o radar com atenção. Equipes de prontidão.
         </div>
       </div>
     );
@@ -309,7 +303,7 @@ export function StatusPanel({
     <div className="status status--safe">
       <div className="status-label">
         <ShieldCheckIcon size={17} style={{ marginRight: 7, verticalAlign: "-3px" }} />
-        Área segura
+        Sem raios na zona de risco
       </div>
       <div className="status-sub">
         Nenhum raio dentro do raio de alerta em {locLabel}.

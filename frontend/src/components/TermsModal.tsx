@@ -73,7 +73,7 @@ export default function TermsModal({ isOpen, onClose, defaultTab = "terms" }: Te
 
               <h4>4. Exclusiva Responsabilidade do Usuário</h4>
               <p>
-                O usuário reconhece e concorda que a tomada de decisões sobre segurança pessoal, busca de abrigo ou paralisação/retomada de atividades ao ar livre é de sua <strong>exclusiva responsabilidade</strong>, cabendo sempre o bom senso ("ouviu trovão, recolha-se").
+                O usuário reconhece e concorda que a tomada de decisões sobre segurança pessoal, busca de abrigo ou paralisação/retomada de atividades ao ar livre é de sua <strong>exclusiva responsabilidade</strong>, cabendo sempre o bom senso.
               </p>
 
               <h4>5. Precisão dos Dados e Limitações Técnicas</h4>

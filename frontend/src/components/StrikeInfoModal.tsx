@@ -101,14 +101,14 @@ export default function StrikeInfoModal({ isOpen, onClose }: StrikeInfoModalProp
               <div className="dist-alert-item dist-alert-item--near">
                 <div className="dist-badge dist-badge--near">&lt; 8 km</div>
                 <div>
-                  <strong>Card Vermelho (ZONA CRÍTICA):</strong> Raio registrado muito próximo. Procure abrigo imediatamente!
+                  <strong>Card Vermelho (ZONA CRÍTICA):</strong> Raio registrado dentro da zona de risco crítica (&lt; 8 km do seu ponto).
                 </div>
               </div>
 
               <div className="dist-alert-item dist-alert-item--safe">
                 <div className="dist-badge dist-badge--safe">&gt; 8 km</div>
                 <div>
-                  <strong>Card Padrão (Monitoramento):</strong> Atividade sob observação a uma distância relativamente segura.
+                  <strong>Card Padrão (Monitoramento):</strong> Raio registrado a mais de 8 km do seu ponto.
                 </div>
               </div>
             </div>
